@@ -1,0 +1,60 @@
+name: Build project
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  QT_VERSION: "6.11.0"
+  BUILD_TYPE: Release
+  QT_PACKAGE_URL: "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6110/qt6_6110_msvc2022_64/qt.qt6.6110.win64_msvc2022_64/6.11.0-0-202603180535qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z"
+
+jobs:
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Qt
+        id: qt-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.workspace }}\Qt
+          key: qt-${{ runner.os }}-${{ env.QT_VERSION }}-msvc2022-qtbase
+
+      - name: Download Qt
+        if: steps.qt-cache.outputs.cache-hit != 'true'
+        run: |
+          curl.exe --location --fail --retry 3 --output qtbase.7z "$env:QT_PACKAGE_URL"
+          7z x qtbase.7z "-o$env:RUNNER_WORKSPACE\Qt" -y
+
+      - name: Register Qt
+        run: |
+          $qtConfig = Get-ChildItem "$env:RUNNER_WORKSPACE\Qt" -Recurse -Filter Qt6Config.cmake | Select-Object -First 1
+          if (-not $qtConfig) {
+            Write-Error "Qt6Config.cmake was not found after extracting Qt."
+            exit 1
+          }
+          $qtRoot = Split-Path -Parent (Split-Path -Parent (Split-Path -Parent (Split-Path -Parent $qtConfig.FullName)))
+          "QT_ROOT_DIR=$qtRoot" >> $env:GITHUB_ENV
+          "$qtRoot\bin" >> $env:GITHUB_PATH
+          Write-Host "Qt6Config.cmake=$($qtConfig.FullName)"
+          Write-Host "QT_ROOT_DIR=$qtRoot"
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build -G "Visual Studio 17 2022" -A x64 `
+            -DCMAKE_PREFIX_PATH="$env:QT_ROOT_DIR"
+
+      - name: Build
+        run: |
+          cmake --build build --config "$env:BUILD_TYPE" --parallel
