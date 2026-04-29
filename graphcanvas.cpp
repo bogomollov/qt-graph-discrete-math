@@ -38,7 +38,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     painter.setBrush(QColor(255, 205, 112));
 
     constexpr qreal vertexRadius = 24.0;
-    for (const QPointF &vertex : vertices) {
+    for (const QPointF &vertex : std::as_const(vertices)) {
         painter.drawEllipse(vertex, vertexRadius, vertexRadius);
     }
 }
