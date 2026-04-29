@@ -17,6 +17,8 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        graphcanvas.cpp
+        graphcanvas.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -42,7 +44,10 @@ else()
     endif()
 endif()
 
-target_link_libraries(qt-graph-discrete-math PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(qt-graph-discrete-math
+    PRIVATE
+        Qt${QT_VERSION_MAJOR}::Widgets
+)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
