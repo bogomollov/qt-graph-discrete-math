@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-class QQuickWidget;
+class GraphCanvas;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,6 +21,6 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    QQuickWidget *graphView;
+    GraphCanvas *graphCanvas;
 };
 #endif // MAINWINDOW_H
