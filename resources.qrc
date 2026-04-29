@@ -1,5 +1,0 @@
-<RCC>
-    <qresource prefix="/qt/qml">
-        <file>GraphEditor.qml</file>
-    </qresource>
-</RCC>
