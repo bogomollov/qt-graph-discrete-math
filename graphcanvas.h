@@ -18,6 +18,7 @@ protected:
 
 private:
     QVector<QPointF> vertices;
+    qsizetype selectedVertexIndex = -1;
 };
 
 #endif // GRAPHCANVAS_H

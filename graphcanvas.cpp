@@ -4,6 +4,10 @@
 #include <QPainter>
 #include <QString>
 
+namespace {
+constexpr qreal vertexRadius = 24.0;
+}
+
 GraphCanvas::GraphCanvas(QWidget *parent)
     : QWidget(parent)
 {
@@ -20,10 +24,22 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    vertices.append(event->position());
+    const QPointF clickPosition = event->position();
 #else
-    vertices.append(event->pos());
+    const QPointF clickPosition = event->pos();
 #endif
+
+    for (qsizetype index = vertices.size() - 1; index >= 0; --index) {
+        const QPointF distance = vertices.at(index) - clickPosition;
+        if (QPointF::dotProduct(distance, distance) <= vertexRadius * vertexRadius) {
+            selectedVertexIndex = index;
+            update();
+            return;
+        }
+    }
+
+    vertices.append(clickPosition);
+    selectedVertexIndex = -1;
     update();
 }
 
@@ -41,7 +57,6 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     QFont vertexLabelFont = painter.font();
     vertexLabelFont.setBold(true);
 
-    constexpr qreal vertexRadius = 24.0;
     for (qsizetype index = 0; index < vertices.size(); ++index) {
         const QPointF &vertex = vertices.at(index);
         const QRectF vertexRect(vertex.x() - vertexRadius,
@@ -49,7 +64,10 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
                                 vertexRadius * 2.0,
                                 vertexRadius * 2.0);
 
-        painter.setPen(QPen(QColor(255, 174, 24), 2));
+        const QColor outlineColor = index == selectedVertexIndex
+                                        ? QColor(214, 130, 0)
+                                        : QColor(255, 174, 24);
+        painter.setPen(QPen(outlineColor, 2));
         painter.drawEllipse(vertex, vertexRadius, vertexRadius);
         painter.setPen(QColor(34, 34, 34));
         painter.setFont(vertexLabelFont);
