@@ -2,6 +2,7 @@
 
 #include <QMouseEvent>
 #include <QPainter>
+#include <QString>
 
 GraphCanvas::GraphCanvas(QWidget *parent)
     : QWidget(parent)
@@ -37,8 +38,21 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(255, 174, 24), 2));
     painter.setBrush(QColor(255, 205, 112));
 
+    QFont vertexLabelFont = painter.font();
+    vertexLabelFont.setBold(true);
+
     constexpr qreal vertexRadius = 24.0;
-    for (const QPointF &vertex : std::as_const(vertices)) {
+    for (qsizetype index = 0; index < vertices.size(); ++index) {
+        const QPointF &vertex = vertices.at(index);
+        const QRectF vertexRect(vertex.x() - vertexRadius,
+                                vertex.y() - vertexRadius,
+                                vertexRadius * 2.0,
+                                vertexRadius * 2.0);
+
+        painter.setPen(QPen(QColor(255, 174, 24), 2));
         painter.drawEllipse(vertex, vertexRadius, vertexRadius);
+        painter.setPen(QColor(34, 34, 34));
+        painter.setFont(vertexLabelFont);
+        painter.drawText(vertexRect, Qt::AlignCenter, QString::number(index + 1));
     }
 }
