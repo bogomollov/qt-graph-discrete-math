@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <qplaintextedit.h>
 
 class GraphCanvas;
 
@@ -18,6 +19,12 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
+
+private slots:
+    void on_bfsButton_clicked();
+    void on_dfsButton_clicked();
+    void on_actionSaveGraph_triggered();
+    void on_actionLoadGraph_triggered();
 
 private:
     Ui::MainWindow *ui;
