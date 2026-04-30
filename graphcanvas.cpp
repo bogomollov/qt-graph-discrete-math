@@ -4,8 +4,11 @@
 #include <QPainter>
 #include <QString>
 
+#include <utility>
+
 namespace {
 constexpr qreal vertexRadius = 24.0;
+constexpr qreal vertexClickTolerance = 6.0;
 }
 
 GraphCanvas::GraphCanvas(QWidget *parent)
@@ -29,13 +32,30 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     const QPointF clickPosition = event->pos();
 #endif
 
-    for (qsizetype index = vertices.size() - 1; index >= 0; --index) {
+    qsizetype clickedVertexIndex = -1;
+    qreal closestDistanceSquared = 0.0;
+    const qreal hitRadius = vertexRadius + vertexClickTolerance;
+    const qreal hitRadiusSquared = hitRadius * hitRadius;
+
+    for (qsizetype index = 0; index < vertices.size(); ++index) {
         const QPointF distance = vertices.at(index) - clickPosition;
-        if (QPointF::dotProduct(distance, distance) <= vertexRadius * vertexRadius) {
-            selectedVertexIndex = index;
-            update();
-            return;
+        const qreal distanceSquared = QPointF::dotProduct(distance, distance);
+        if (distanceSquared <= hitRadiusSquared
+                && (clickedVertexIndex < 0 || distanceSquared < closestDistanceSquared)) {
+            clickedVertexIndex = index;
+            closestDistanceSquared = distanceSquared;
         }
+    }
+
+    if (clickedVertexIndex >= 0) {
+        if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
+            edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
+            selectedVertexIndex = -1;
+        } else {
+            selectedVertexIndex = clickedVertexIndex;
+        }
+        update();
+        return;
     }
 
     vertices.append(clickPosition);
@@ -53,6 +73,11 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
 
     painter.setPen(QPen(QColor(255, 174, 24), 2));
     painter.setBrush(QColor(255, 205, 112));
+
+    painter.setPen(QPen(QColor(120, 120, 120), 2));
+    for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
+        painter.drawLine(vertices.at(edge.first), vertices.at(edge.second));
+    }
 
     QFont vertexLabelFont = painter.font();
     vertexLabelFont.setBold(true);
