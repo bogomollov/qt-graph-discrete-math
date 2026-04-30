@@ -2,6 +2,7 @@
 #define GRAPHCANVAS_H
 
 #include <QPointF>
+#include <QPair>
 #include <QVector>
 #include <QWidget>
 
@@ -18,6 +19,8 @@ protected:
 
 private:
     QVector<QPointF> vertices;
+    QVector<QPair<qsizetype, qsizetype>> edges;
+    qsizetype selectedVertexIndex = -1;
 };
 
 #endif // GRAPHCANVAS_H
