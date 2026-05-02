@@ -1,0 +1,136 @@
+/* ===== MainWindow ===== */
+QMainWindow {
+    background-color: #ECE9D8;
+}
+
+/* ===== Menu Bar ===== */
+QMenuBar {
+    background-color: #ECE9D8;
+    border-bottom: 1px solid #ACA899;
+    font-family: "Tahoma";
+    font-size: 11px;
+    padding: 0px;
+}
+
+QMenuBar::item {
+    padding: 4px 8px;
+    background: transparent;
+    border-right: 1px solid #ACA899;
+}
+
+QMenuBar::item:last {
+    border-right: none;
+}
+
+QMenuBar::item:selected {
+    background-color: #316AC5;
+    color: white;
+}
+
+/* ===== Menu ===== */
+QMenu {
+    background-color: white;
+    border: 2px solid #ACA899;
+    font-family: "Tahoma";
+    font-size: 11px;
+    padding: 2px;
+}
+
+QMenu::item {
+    padding: 4px 32px;
+    border-bottom: 1px solid #E0DDD1;
+}
+
+QMenu::item:last {
+    border-bottom: none;
+}
+
+QMenu::item:selected {
+    background-color: #316AC5;
+    color: white;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #ACA899;
+    margin: 2px 8px;
+}
+
+/* ===== Buttons ===== */
+QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #F3F0E7, stop:0.5 #E6E0CF, stop:1 #D8D0B8);
+    border: 2px solid #7F9DB9;
+    border-radius: 4px;
+    padding: 5px 14px;
+    font-family: "Tahoma";
+    font-size: 11px;
+    color: black;
+}
+
+QPushButton:hover {
+    border-color: #FFC83C;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #FFFCF3, stop:0.5 #FFF3C8, stop:1 #FFE79C);
+}
+
+QPushButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #D8D0B8, stop:0.5 #C8C0A8, stop:1 #B8B098);
+}
+
+/* ===== SpinBox ===== */
+QSpinBox {
+    background-color: white;
+    border: 2px solid #7F9DB9;
+    padding: 2px 4px;
+    font-family: "Tahoma";
+    font-size: 11px;
+}
+
+QSpinBox:focus {
+    border-color: #316AC5;
+}
+
+/* ===== ScrollArea ===== */
+QScrollArea {
+    border: 2px solid #7F9DB9;
+    background: white;
+}
+
+/* ===== PlainTextEdit ===== */
+QPlainTextEdit {
+    background-color: white;
+    border: 2px solid #7F9DB9;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 11px;
+    color: black;
+}
+
+/* ===== Status Bar ===== */
+QStatusBar {
+    background-color: #ECE9D8;
+    border-top: 1px solid #ACA899;
+    font-family: "Tahoma";
+    font-size: 11px;
+}
+
+QStatusBar::item {
+    border: none;
+}
+
+/* ===== Label ===== */
+QLabel {
+    font-family: "Tahoma";
+    font-size: 11px;
+    color: black;
+}
+
+/* ===== Tooltips ===== */
+QToolTip {
+    background-color: #FFFFE1;
+    border: 1px solid black;
+    font-family: "Tahoma";
+    font-size: 11px;
+    padding: 2px;
+}

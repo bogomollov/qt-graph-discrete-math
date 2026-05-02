@@ -1,0 +1,31 @@
+#!/bin/sh
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+regex='^\(feat\|fix\|docs\|refactor\|chore\|test\|hotfix\)/[a-z0-9._-]\+$'
+
+if ! echo "$branch" | grep -Eq "$regex"; then
+  echo "Некорректное имя ветки"
+  echo ""
+  echo "Текущее имя:"
+  echo "  $branch"
+  echo ""
+  echo "Формат:"
+  echo "  <type>/<name>"
+  echo ""
+  echo "Допустимые типы:"
+  echo "  feat     - новая функциональность"
+  echo "  fix      - исправление бага"
+  echo "  docs     - документация"
+  echo "  refactor - рефакторинг"
+  echo "  chore    - служебные изменения"
+  echo "  test     - тесты"
+  echo "  hotfix   - критическое исправление"
+  echo ""
+  echo "Примеры:"
+  echo "  feat/graph-scene"
+  echo "  fix/edge-duplication"
+  echo "  docs/readme-update"
+  echo ""
+  exit 1
+fi

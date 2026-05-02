@@ -25,6 +25,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(qt-graph-discrete-math
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        graphcanvas.cpp
+        graphcanvas.h
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET qt-graph-discrete-math APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
