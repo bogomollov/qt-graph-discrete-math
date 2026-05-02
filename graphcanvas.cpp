@@ -41,7 +41,7 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         const QPointF distance = vertices.at(index) - clickPosition;
         const qreal distanceSquared = QPointF::dotProduct(distance, distance);
         if (distanceSquared <= hitRadiusSquared
-            && (clickedVertexIndex < 0 || distanceSquared < closestDistanceSquared)) {
+                && (clickedVertexIndex < 0 || distanceSquared < closestDistanceSquared)) {
             clickedVertexIndex = index;
             closestDistanceSquared = distanceSquared;
         }

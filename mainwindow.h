@@ -6,6 +6,8 @@
 
 class GraphCanvas;
 
+class GraphCanvas;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;

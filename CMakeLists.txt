@@ -19,7 +19,6 @@ set(PROJECT_SOURCES
         mainwindow.ui
         graphcanvas.cpp
         graphcanvas.h
-        resources.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
