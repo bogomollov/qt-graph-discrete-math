@@ -5,6 +5,8 @@
 #include <qplaintextedit.h>
 
 class GraphCanvas;
+class GraphData;
+class GraphAlgorithms;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,5 +31,7 @@ private slots:
 private:
     Ui::MainWindow *ui;
     GraphCanvas *graphCanvas;
+    GraphData *graphData;
+    GraphAlgorithms *algorithms;
 };
 #endif // MAINWINDOW_H

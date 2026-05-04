@@ -7,7 +7,7 @@
 #include <utility>
 
 namespace {
-constexpr qreal vertexRadius = 24.0;
+constexpr qreal vertexRadius = 24.0; // Радиус вершины
 constexpr qreal vertexClickTolerance = 6.0;
 }
 
@@ -51,6 +51,8 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
             edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
             selectedVertexIndex = -1;
+
+            emit graphChanged();
         } else {
             selectedVertexIndex = clickedVertexIndex;
         }
@@ -60,6 +62,7 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
 
     vertices.append(clickPosition);
     selectedVertexIndex = -1;
+    emit graphChanged();
     update();
 }
 

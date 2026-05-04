@@ -19,6 +19,10 @@ set(PROJECT_SOURCES
         mainwindow.ui
         graphcanvas.cpp
         graphcanvas.h
+        graphdata.cpp
+        graphdata.h
+        graphalgorithms.cpp
+        graphalgorithms.h
         resources.qrc
 )
 
@@ -28,6 +32,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         graphcanvas.cpp
         graphcanvas.h
+        graphdata.h graphdata.cpp
+        graphalgorithms.h graphalgorithms.cpp
 
 
     )
