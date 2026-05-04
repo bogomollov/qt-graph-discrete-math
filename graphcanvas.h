@@ -16,6 +16,11 @@ public:
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
 
+    // Методы подсветки
+    void highlightVertex(int index, const QColor &color);
+    void highlightEdge(int from, int to, const QColor &color);
+    void clearHighlights();
+
 signals:
     void graphChanged();  // сигнал: граф изменился
 
@@ -28,6 +33,14 @@ private:
     QVector<QPointF> vertices;                   // Координаты всех вершин
     QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
     qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
+
+    struct Highlight {
+        bool isEdge = false;
+        int v1 = -1;
+        int v2 = -1;
+        QColor color;
+    };
+    QVector<Highlight> m_highlights;
 };
 
 #endif // GRAPHCANVAS_H

@@ -23,6 +23,8 @@ set(PROJECT_SOURCES
         graphdata.h
         graphalgorithms.cpp
         graphalgorithms.h
+        graphanimator.cpp
+        graphanimator.h
         resources.qrc
 )
 
@@ -34,6 +36,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         graphcanvas.h
         graphdata.h graphdata.cpp
         graphalgorithms.h graphalgorithms.cpp
+        graphanimator.h graphanimator.cpp
 
 
     )

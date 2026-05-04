@@ -3,6 +3,8 @@
 #include "graphcanvas.h"
 #include "graphdata.h"
 #include "graphalgorithms.h"
+#include "graphanimator.h"
+#include <QMessageBox>
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -11,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     , graphCanvas(new GraphCanvas(this))
     , graphData(new GraphData)
     , algorithms(new GraphAlgorithms)
+    , animator(new GraphAnimator(this))
 {
     ui->setupUi(this);
     setWindowTitle(tr("qt-graph-discrete-math"));
@@ -31,6 +34,15 @@ MainWindow::MainWindow(QWidget *parent)
                 .arg(graphData->vertexCount())
                 .arg(graphCanvas->getEdges().size()));
     });
+
+    animator->setCanvas(graphCanvas);
+    connect(animator, &GraphAnimator::logMessage, ui->logOutput, &QPlainTextEdit::appendPlainText);
+    connect(animator, &GraphAnimator::finished, [this]() {
+        ui->bfsButton->setText("BFS");
+        ui->dfsButton->setText("DFS");
+        ui->bfsButton->setEnabled(true);
+        ui->dfsButton->setEnabled(true);
+    });
 }
 
 // --- Деструктор ---
@@ -44,43 +56,69 @@ MainWindow::~MainWindow()
 // --- Обработчик кнопки BFS ---
 void MainWindow::on_bfsButton_clicked()
 {
-    // Обновляем данные графа перед запуском алгоритма
-    graphData->setData(graphCanvas->getVertices(),
-                       graphCanvas->getEdges());
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
 
-    // Проверка на пустой граф
     if (graphData->vertexCount() == 0) {
         ui->logOutput->appendPlainText("Ошибка: граф пуст!");
         return;
     }
 
-    // Получаем стартовую вершину
-    qsizetype startVertex = ui->startVertexSpin->value() - 1;
+    int startVertex = ui->startVertexSpin->value() - 1;
 
-    QStringList bfsLog = algorithms->bfs(*graphData, startVertex);
-    // Вывод лога в текстовое поле
-    for (const QString &msg : bfsLog) {
-        ui->logOutput->appendPlainText(msg);
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
     }
+
+    auto steps = algorithms->bfs(*graphData, startVertex);
+
+    QStringList order;
+    for (const auto &step : steps) {
+        if (step.type == AlgorithmStep::VisitVertex)
+            order << QString::number(step.vertex + 1);
+    }
+    ui->logOutput->appendPlainText("BFS: " + order.join(" → "));
+
+    ui->bfsButton->setText("СТОП");
+    ui->dfsButton->setEnabled(false);
+    animator->start(steps);
 }
 
 // --- Обработчик кнопки DFS ---
 void MainWindow::on_dfsButton_clicked()
 {
-    graphData->setData(graphCanvas->getVertices(),
-                       graphCanvas->getEdges());
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
 
     if (graphData->vertexCount() == 0) {
         ui->logOutput->appendPlainText("Ошибка: граф пуст!");
         return;
     }
 
-    qsizetype startVertex = ui->startVertexSpin->value() - 1;
+    int startVertex = ui->startVertexSpin->value() - 1;
 
-    QStringList dfsLog = algorithms->dfs(*graphData, startVertex);
-    for (const QString &msg : dfsLog) {
-        ui->logOutput->appendPlainText(msg);
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
     }
+
+    auto steps = algorithms->dfs(*graphData, startVertex);
+
+    QStringList order;
+    for (const auto &step : steps) {
+        if (step.type == AlgorithmStep::VisitVertex)
+            order << QString::number(step.vertex + 1);
+    }
+    ui->logOutput->appendPlainText("DFS: " + order.join(" → "));
+
+    ui->dfsButton->setText("СТОП");
+    ui->bfsButton->setEnabled(false);
+    animator->start(steps);
+}
+
+// --- Меню Файл ---
+void MainWindow::on_actionNewGraph_triggered()
+{
+    ui->logOutput->appendPlainText("Новый граф пока не реализован");
 }
 
 void MainWindow::on_actionSaveGraph_triggered()
@@ -91,4 +129,35 @@ void MainWindow::on_actionSaveGraph_triggered()
 void MainWindow::on_actionLoadGraph_triggered()
 {
     ui->logOutput->appendPlainText("Загрузка пока не реализована");
+}
+
+void MainWindow::on_actionExit_triggered()
+{
+    close();
+}
+
+// --- Меню Вид ---
+void MainWindow::on_actionClearLog_triggered()
+{
+    ui->logOutput->clear();
+}
+
+// --- Меню Граф ---
+void MainWindow::on_actionAdjacencyMatrix_triggered()
+{
+    ui->logOutput->appendPlainText("Матрица смежности пока не реализована");
+}
+
+void MainWindow::on_actionAdjacencyList_triggered()
+{
+    ui->logOutput->appendPlainText("Список смежности пока не реализован");
+}
+
+// --- Меню Справка ---
+void MainWindow::on_actionAbout_triggered()
+{
+    QMessageBox::about(this, "О программе",
+                       "qt-graph-discrete-math v0.1\n\n"
+                       "Программа для построения графов\n"
+                       "и визуализации алгоритмов BFS и DFS.");
 }

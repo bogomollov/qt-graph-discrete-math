@@ -7,6 +7,7 @@
 class GraphCanvas;
 class GraphData;
 class GraphAlgorithms;
+class GraphAnimator;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,13 +26,20 @@ public:
 private slots:
     void on_bfsButton_clicked();
     void on_dfsButton_clicked();
+    void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();
+    void on_actionExit_triggered();
+    void on_actionClearLog_triggered();
+    void on_actionAdjacencyMatrix_triggered();
+    void on_actionAdjacencyList_triggered();
+    void on_actionAbout_triggered();
 
 private:
     Ui::MainWindow *ui;
     GraphCanvas *graphCanvas;
     GraphData *graphData;
     GraphAlgorithms *algorithms;
+    GraphAnimator *animator;
 };
 #endif // MAINWINDOW_H

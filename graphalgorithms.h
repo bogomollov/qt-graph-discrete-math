@@ -1,18 +1,34 @@
 #ifndef GRAPHALGORITHMS_H
 #define GRAPHALGORITHMS_H
 
-#include <QString>
 #include <QVector>
+#include <QPair>
 
 class GraphData;
+
+// Один шаг алгоритма
+struct AlgorithmStep {
+    enum Type {
+        VisitVertex,
+        DiscoverEdge,
+        Backtrack,
+        Start,
+        Finish
+    };
+
+    Type type;
+    int vertex;        // основная вершина
+    int secondVertex;  // вторая вершина (для ребра)
+    QString description;
+};
 
 class GraphAlgorithms
 {
 public:
     GraphAlgorithms() = default;
 
-    QStringList bfs(const GraphData &graph, qsizetype startVertex);
-    QStringList dfs(const GraphData &graph, qsizetype startVertex);
+    QVector<AlgorithmStep> bfs(const GraphData &graph, int startVertex);
+    QVector<AlgorithmStep> dfs(const GraphData &graph, int startVertex);
 };
 
-#endif // GRAPHALGORITHMS_H
+#endif

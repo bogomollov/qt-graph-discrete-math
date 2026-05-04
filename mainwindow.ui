@@ -120,30 +120,30 @@
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="action_4"/>
-    <addaction name="action"/>
-    <addaction name="action_2"/>
+    <addaction name="actionNewGraph"/>
+    <addaction name="actionSaveGraph"/>
+    <addaction name="actionLoadGraph"/>
     <addaction name="separator"/>
-    <addaction name="action_5"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
      <string>Вид</string>
     </property>
-    <addaction name="action_8"/>
+    <addaction name="actionClearLog"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
      <string>Граф</string>
     </property>
-    <addaction name="action_9"/>
-    <addaction name="action_10"/>
+    <addaction name="actionAdjacencyMatrix"/>
+    <addaction name="actionAdjacencyList"/>
    </widget>
    <widget class="QMenu" name="menu_4">
     <property name="title">
      <string>Справка</string>
     </property>
-    <addaction name="action_11"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -151,22 +151,22 @@
    <addaction name="menu_4"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="action">
+  <action name="actionSaveGraph">
    <property name="text">
     <string>Сохранить граф</string>
    </property>
   </action>
-  <action name="action_2">
+  <action name="actionLoadGraph">
    <property name="text">
     <string>Загрузить граф</string>
    </property>
   </action>
-  <action name="action_4">
+  <action name="actionNewGraph">
    <property name="text">
     <string>Новый граф</string>
    </property>
   </action>
-  <action name="action_5">
+  <action name="actionExit">
    <property name="text">
     <string>Выход</string>
    </property>
@@ -176,22 +176,22 @@
     </font>
    </property>
   </action>
-  <action name="action_8">
+  <action name="actionClearLog">
    <property name="text">
     <string>Очистить лог</string>
    </property>
   </action>
-  <action name="action_9">
+  <action name="actionAdjacencyMatrix">
    <property name="text">
     <string>Матрица смежности</string>
    </property>
   </action>
-  <action name="action_10">
+  <action name="actionAdjacencyList">
    <property name="text">
     <string>Список смежности</string>
    </property>
   </action>
-  <action name="action_11">
+  <action name="actionAbout">
    <property name="text">
     <string>О программе</string>
    </property>

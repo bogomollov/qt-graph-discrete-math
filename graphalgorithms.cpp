@@ -1,86 +1,92 @@
 #include "graphalgorithms.h"
 #include "graphdata.h"
 #include <QQueue>
-#include <QString>
+#include <QVector>
 
-QStringList GraphAlgorithms::bfs(const GraphData &graph, qsizetype startVertex)
+QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVertex)
 {
-    QStringList log;
+    QVector<AlgorithmStep> steps;
 
     if (graph.vertexCount() == 0 || startVertex < 0 || startVertex >= graph.vertexCount()) {
-        log << "Ошибка: граф пуст или неверная стартовая вершина";
-        return log;
+        steps.append({AlgorithmStep::Start, -1, -1, "Ошибка: граф пуст или неверная вершина"});
+        return steps;
     }
 
     QVector<bool> visited(graph.vertexCount(), false);
-    QQueue<qsizetype> queue;
+    QQueue<int> queue;
 
-    log << QString("=== BFS из вершины %1 ===").arg(startVertex + 1);
+    steps.append({AlgorithmStep::Start, startVertex, -1,
+                  QString("=== BFS из вершины %1 ===").arg(startVertex + 1)});
 
     visited[startVertex] = true;
     queue.enqueue(startVertex);
-    log << QString("Шаг 1: Посетили вершину %1, добавили в очередь").arg(startVertex + 1);
+    steps.append({AlgorithmStep::VisitVertex, startVertex, -1,
+                  QString("Посетили вершину %1").arg(startVertex + 1)});
 
-    int step = 2;
     while (!queue.isEmpty()) {
-        qsizetype current = queue.dequeue();
-        log << QString("Шаг %1: Извлекли вершину %2 из очереди").arg(step++).arg(current + 1);
+        int current = queue.dequeue();
 
-        QVector<qsizetype> neighbors = graph.getNeighbors(current);
-        for (qsizetype neighbor : neighbors) {
+        QVector<int> neighbors;
+        // конвертируем qsizetype -> int
+        for (auto n : graph.getNeighbors(current))
+            neighbors.append(static_cast<int>(n));
+
+        for (int neighbor : neighbors) {
             if (!visited[neighbor]) {
                 visited[neighbor] = true;
                 queue.enqueue(neighbor);
-                log << QString("Шаг %1: Посетили вершину %2 (сосед %3), добавили в очередь")
-                           .arg(step++)
-                           .arg(neighbor + 1)
-                           .arg(current + 1);
+
+                steps.append({AlgorithmStep::DiscoverEdge, current, neighbor,
+                              QString("Ребро %1-%2").arg(current + 1).arg(neighbor + 1)});
+                steps.append({AlgorithmStep::VisitVertex, neighbor, -1,
+                              QString("Посетили вершину %1").arg(neighbor + 1)});
             }
         }
     }
 
-    log << "=== BFS завершён ===";
-    return log;
+    steps.append({AlgorithmStep::Finish, -1, -1, "=== BFS завершён ==="});
+    return steps;
 }
 
-QStringList GraphAlgorithms::dfs(const GraphData &graph, qsizetype startVertex)
+QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVertex)
 {
-    QStringList log;
+    QVector<AlgorithmStep> steps;
 
     if (graph.vertexCount() == 0 || startVertex < 0 || startVertex >= graph.vertexCount()) {
-        log << "Ошибка: граф пуст или неверная стартовая вершина";
-        return log;
+        steps.append({AlgorithmStep::Start, -1, -1, "Ошибка: граф пуст или неверная вершина"});
+        return steps;
     }
 
     QVector<bool> visited(graph.vertexCount(), false);
-    QVector<qsizetype> stack;
-    int step = 1;
+    QVector<int> stack;
 
-    log << QString("=== DFS из вершины %1 ===").arg(startVertex + 1);
+    steps.append({AlgorithmStep::Start, startVertex, -1,
+                  QString("=== DFS из вершины %1 ===").arg(startVertex + 1)});
 
     stack.push_back(startVertex);
 
     while (!stack.isEmpty()) {
-        qsizetype vertex = stack.last();
+        int vertex = stack.last();
         stack.removeLast();
 
         if (!visited[vertex]) {
             visited[vertex] = true;
-            log << QString("Шаг %1: Посетили вершину %2").arg(step++).arg(vertex + 1);
+            steps.append({AlgorithmStep::VisitVertex, vertex, -1,
+                          QString("Посетили вершину %1").arg(vertex + 1)});
 
             QVector<qsizetype> neighbors = graph.getNeighbors(vertex);
+
             for (int i = neighbors.size() - 1; i >= 0; --i) {
-                if (!visited[neighbors[i]]) {
-                    stack.push_back(neighbors[i]);
-                    log << QString("Шаг %1: Добавили вершину %2 в стек (сосед %3)")
-                               .arg(step++)
-                               .arg(neighbors[i] + 1)
-                               .arg(vertex + 1);
+                int neighbor = static_cast<int>(neighbors[i]);
+                if (!visited[neighbor]) {
+                    stack.push_back(neighbor);
+                    steps.append({AlgorithmStep::DiscoverEdge, vertex, neighbor,
+                                  QString("Ребро %1-%2").arg(vertex + 1).arg(neighbor + 1)});
                 }
             }
         }
     }
 
-    log << "=== DFS завершён ===";
-    return log;
+    steps.append({AlgorithmStep::Finish, -1, -1, "=== DFS завершён ==="});
+    return steps;
 }
