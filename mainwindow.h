@@ -41,5 +41,7 @@ private:
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
+
+    QString m_lastSavePath;  // Запоминаем последний путь сохранения
 };
 #endif // MAINWINDOW_H

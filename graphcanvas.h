@@ -16,6 +16,10 @@ public:
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
 
+    void setData(const QVector<QPointF> &newVertices,
+                 const QVector<QPair<qsizetype, qsizetype>> &newEdges);
+    void clear();
+
     // Методы подсветки
     void highlightVertex(int index, const QColor &color);
     void highlightEdge(int from, int to, const QColor &color);

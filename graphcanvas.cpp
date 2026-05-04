@@ -139,3 +139,24 @@ void GraphCanvas::clearHighlights()
     m_highlights.clear();
     update();
 }
+
+void GraphCanvas::setData(const QVector<QPointF> &newVertices,
+                          const QVector<QPair<qsizetype, qsizetype>> &newEdges)
+{
+    vertices = newVertices;
+    edges = newEdges;
+    selectedVertexIndex = -1;
+    m_highlights.clear();
+    update();
+    emit graphChanged();
+}
+
+void GraphCanvas::clear()
+{
+    vertices.clear();
+    edges.clear();
+    selectedVertexIndex = -1;
+    m_highlights.clear();
+    update();
+    emit graphChanged();
+}

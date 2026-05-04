@@ -4,7 +4,11 @@
 #include "graphdata.h"
 #include "graphalgorithms.h"
 #include "graphanimator.h"
+#include "graphfilemanager.h"
+
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QDir>
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -118,17 +122,105 @@ void MainWindow::on_dfsButton_clicked()
 // --- Меню Файл ---
 void MainWindow::on_actionNewGraph_triggered()
 {
-    ui->logOutput->appendPlainText("Новый граф пока не реализован");
+    // Спрашиваем подтверждение, если граф не пустой
+    if (graphCanvas->getVertices().size() > 0) {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this, "Новый граф",
+            "Текущий граф будет очищен. Продолжить?",
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::No) {
+            return;
+        }
+    }
+
+    graphCanvas->clear();
+    m_lastSavePath.clear();
+    ui->logOutput->appendPlainText("Создан новый граф");
 }
 
 void MainWindow::on_actionSaveGraph_triggered()
 {
-    ui->logOutput->appendPlainText("Сохранение пока не реализовано");
+    const QVector<QPointF> &vertices = graphCanvas->getVertices();
+    const QVector<QPair<qsizetype, qsizetype>> &edges = graphCanvas->getEdges();
+
+    if (vertices.isEmpty()) {
+        QMessageBox::information(this, "Информация", "Граф пуст. Нечего сохранять.");
+        return;
+    }
+
+    // Выбираем файл для сохранения
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Сохранить граф",
+        m_lastSavePath.isEmpty() ? QDir::homePath() + "/graph.json" : m_lastSavePath,
+        "Graph Files (*.json);;All Files (*)");
+
+    if (fileName.isEmpty()) {
+        return; // Пользователь отменил
+    }
+
+    // Сохраняем путь для следующего раза
+    m_lastSavePath = fileName;
+
+    // Сохраняем через менеджер
+    QString errorMsg;
+    if (GraphFileManager::saveToFile(fileName, vertices, edges, &errorMsg)) {
+        ui->logOutput->appendPlainText(
+            QString("Граф сохранён: %1 вершин, %2 рёбер\nФайл: %3")
+                .arg(vertices.size())
+                .arg(edges.size())
+                .arg(fileName));
+    } else {
+        QMessageBox::warning(this, "Ошибка сохранения", errorMsg);
+    }
 }
 
 void MainWindow::on_actionLoadGraph_triggered()
 {
-    ui->logOutput->appendPlainText("Загрузка пока не реализована");
+    // Спрашиваем подтверждение, если граф не пустой
+    if (graphCanvas->getVertices().size() > 0) {
+        QMessageBox::StandardButton reply = QMessageBox::question(
+            this, "Загрузка графа",
+            "Текущий граф будет заменён. Продолжить?",
+            QMessageBox::Yes | QMessageBox::No);
+
+        if (reply == QMessageBox::No) {
+            return;
+        }
+    }
+
+    // Выбираем файл для загрузки
+    QString fileName = QFileDialog::getOpenFileName(
+        this,
+        "Загрузить граф",
+        m_lastSavePath.isEmpty() ? QDir::homePath() : m_lastSavePath,
+        "Graph Files (*.json);;All Files (*)");
+
+    if (fileName.isEmpty()) {
+        return; // Пользователь отменил
+    }
+
+    // Загружаем данные
+    QVector<QPointF> vertices;
+    QVector<QPair<qsizetype, qsizetype>> edges;
+
+    QString errorMsg;
+    if (GraphFileManager::loadFromFile(fileName, vertices, edges, &errorMsg)) {
+        // Здесь нужно обновить холст
+        // Пока просто выводим сообщение
+        ui->logOutput->appendPlainText(
+            QString("Граф загружен: %1 вершин, %2 рёбер\nФайл: %3")
+                .arg(vertices.size())
+                .arg(edges.size())
+                .arg(fileName));
+
+        graphCanvas->setData(vertices, edges);
+        m_lastSavePath = fileName;
+        ui->logOutput->appendPlainText("Граф успешно загружен на холст");
+    } else {
+        QMessageBox::warning(this, "Ошибка загрузки", errorMsg);
+    }
 }
 
 void MainWindow::on_actionExit_triggered()
