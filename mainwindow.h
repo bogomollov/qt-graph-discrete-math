@@ -9,6 +9,8 @@ class GraphData;
 class GraphAlgorithms;
 class GraphAnimator;
 
+class GraphCanvas;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
