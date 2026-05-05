@@ -13,12 +13,21 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        graphcanvas.cpp
-        graphcanvas.h
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+    graphcanvas.cpp
+    graphcanvas.h
+    graphdata.cpp
+    graphdata.h
+    graphalgorithms.cpp
+    graphalgorithms.h
+    graphanimator.cpp
+    graphanimator.h
+    graphfilemanager.cpp
+    graphfilemanager.h
+    resources.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -27,6 +36,11 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         graphcanvas.cpp
         graphcanvas.h
+        graphdata.h graphdata.cpp
+        graphalgorithms.h graphalgorithms.cpp
+        graphanimator.h graphanimator.cpp
+        graphfilemanager.h graphfilemanager.cpp
+
 
 
     )

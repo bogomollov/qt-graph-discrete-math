@@ -5,6 +5,9 @@
 #include <qplaintextedit.h>
 
 class GraphCanvas;
+class GraphData;
+class GraphAlgorithms;
+class GraphAnimator;
 
 class GraphCanvas;
 
@@ -25,11 +28,22 @@ public:
 private slots:
     void on_bfsButton_clicked();
     void on_dfsButton_clicked();
+    void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();
+    void on_actionExit_triggered();
+    void on_actionClearLog_triggered();
+    void on_actionAdjacencyMatrix_triggered();
+    void on_actionAdjacencyList_triggered();
+    void on_actionAbout_triggered();
 
 private:
     Ui::MainWindow *ui;
     GraphCanvas *graphCanvas;
+    GraphData *graphData;
+    GraphAlgorithms *algorithms;
+    GraphAnimator *animator;
+
+    QString m_lastSavePath;  // Запоминаем последний путь сохранения
 };
 #endif // MAINWINDOW_H
