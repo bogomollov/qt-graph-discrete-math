@@ -18,6 +18,34 @@ GraphCanvas::GraphCanvas(QWidget *parent)
     setAutoFillBackground(false);
     setMinimumSize(640, 480);
     setCursor(Qt::CrossCursor);
+    setMouseTracking(true);
+}
+
+void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        m_isDragging = false;
+        m_draggedVertexIndex = -1;
+    }
+
+    QWidget::mouseReleaseEvent(event);
+}
+
+void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!m_isDragging || m_draggedVertexIndex < 0)
+        return;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QPointF pos = event->position();
+#else
+    const QPointF pos = event->pos();
+#endif
+
+    vertices[m_draggedVertexIndex] = pos;
+
+    update();
+    emit graphChanged();
 }
 
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
@@ -49,14 +77,17 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     }
 
     if (clickedVertexIndex >= 0) {
+        m_isDragging = true;
+        m_draggedVertexIndex = clickedVertexIndex;
+
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
             edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
             selectedVertexIndex = -1;
-
             emit graphChanged();
         } else {
             selectedVertexIndex = clickedVertexIndex;
         }
+
         update();
         return;
     }
