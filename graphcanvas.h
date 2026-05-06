@@ -34,6 +34,7 @@ protected:
     void paintEvent(QPaintEvent *event) override;      // Вызывается когда нужно перерисовать виджет
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
     QVector<QPointF> vertices;                   // Координаты всех вершин

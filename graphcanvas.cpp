@@ -19,6 +19,7 @@ GraphCanvas::GraphCanvas(QWidget *parent)
     setMinimumSize(640, 480);
     setCursor(Qt::CrossCursor);
     setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
@@ -48,8 +49,39 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
     emit graphChanged();
 }
 
+void GraphCanvas::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete && selectedVertexIndex >= 0) {
+        const qsizetype removedIndex = selectedVertexIndex;
+        vertices.removeAt(removedIndex);
+        QVector<QPair<qsizetype, qsizetype>> newEdges;
+        newEdges.reserve(edges.size());
+
+        for (const auto &edge : edges) {
+            qsizetype from = edge.first;
+            qsizetype to = edge.second;
+
+            if (from == removedIndex || to == removedIndex)
+                continue;
+            if (from > removedIndex) --from;
+            if (to > removedIndex) --to;
+
+            newEdges.append(qMakePair(from, to));
+        }
+        edges = std::move(newEdges);
+        selectedVertexIndex = -1;
+        m_highlights.clear();
+        update();
+        emit graphChanged();
+        return;
+    }
+
+    QWidget::keyPressEvent(event);
+}
+
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
 {
+    setFocus();
     if (event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
