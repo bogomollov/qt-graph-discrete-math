@@ -3,7 +3,7 @@
 #include <QColor>
 
 namespace {
-constexpr int animationIntervalMs = 600;        // Задержка между шагами
+constexpr int animationIntervalMs = 600;        // Значение по умолчанию
 const QColor visitedVertexColor(76, 175, 80);   // Зелёный для посещённой вершины
 const QColor discoveredEdgeColor(33, 150, 243); // Синий для обнаруженного ребра
 }
@@ -17,6 +17,14 @@ GraphAnimator::GraphAnimator(QObject *parent)
 }
 
 void GraphAnimator::setCanvas(GraphCanvas *canvas) { m_canvas = canvas; }
+
+// Метод для установки скорости
+void GraphAnimator::setAnimationSpeed(int milliseconds)
+{
+    if (milliseconds >= 50 && milliseconds <= 5000) {
+        m_timer->setInterval(milliseconds);
+    }
+}
 
 void GraphAnimator::start(const QVector<AlgorithmStep> &steps)
 {

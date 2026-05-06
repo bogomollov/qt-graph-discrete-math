@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     , animator(new GraphAnimator(this))
 {
     ui->setupUi(this);
+    ui->animationSpeedCombo->setCurrentText("600"); // Базовая задержка
     setWindowTitle(tr("qt-graph-discrete-math"));
 
     // Холст в ScrollArea
@@ -47,6 +48,17 @@ MainWindow::MainWindow(QWidget *parent)
         ui->bfsButton->setEnabled(true);
         ui->dfsButton->setEnabled(true);
     });
+
+    // Подключаем изменение скорости анимации
+    connect(ui->animationSpeedCombo, &QComboBox::currentTextChanged, [this](const QString &text) {
+        int speedValue = text.toInt();
+        int delay = 1200 - speedValue;
+        animator->setAnimationSpeed(delay);
+    });
+
+    // Устанавливаем начальную скорость
+    int initialSpeedValue = ui->animationSpeedCombo->currentText().toInt();
+    animator->setAnimationSpeed(1200 - initialSpeedValue);
 }
 
 // --- Деструктор ---
