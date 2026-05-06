@@ -265,7 +265,11 @@ void MainWindow::on_actionAdjacencyList_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "О программе",
-                       "qt-graph-discrete-math v0.1\n\n"
+                       "qt-graph-discrete-math v1.0\n\n"
                        "Программа для построения графов\n"
-                       "и визуализации алгоритмов BFS и DFS.");
+                       "и визуализации работы алгоритмов\n\n"
+                       "Шнякина Елена Александровна - руководитель\n"
+                       "Муллагалиев Арслан Артурович - разработчик\n"
+                       "Богомолов Богдан - разработчик\n"
+                       );
 }

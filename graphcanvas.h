@@ -13,9 +13,12 @@ class GraphCanvas : public QWidget
 public:
     explicit GraphCanvas(QWidget *parent = nullptr);
 
+    // Геттеры для получения данных
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
+    qsizetype getStartVertex() const { return startVertexIndex; }
 
+    // Сеттеры для установки данных
     void setData(const QVector<QPointF> &newVertices,
                  const QVector<QPair<qsizetype, qsizetype>> &newEdges);
     void clear();
@@ -29,7 +32,6 @@ public:
 
     // Методы для работы со стартовой вершиной
     void setStartVertex(qsizetype index);
-    qsizetype getStartVertex() const { return startVertexIndex; }
     void clearStartVertex();
 
 signals:
