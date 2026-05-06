@@ -32,11 +32,16 @@ signals:
 protected:
     void mousePressEvent(QMouseEvent *event) override; // Клик мышью
     void paintEvent(QPaintEvent *event) override;      // Вызывается когда нужно перерисовать виджет
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
     QVector<QPointF> vertices;                   // Координаты всех вершин
     QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
     qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
+    bool m_isDragging = false;
+    qsizetype m_draggedVertexIndex = -1;
 
     struct Highlight {
         bool isEdge = false;

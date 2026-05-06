@@ -18,10 +18,70 @@ GraphCanvas::GraphCanvas(QWidget *parent)
     setAutoFillBackground(false);
     setMinimumSize(640, 480);
     setCursor(Qt::CrossCursor);
+    setMouseTracking(true);
+    setFocusPolicy(Qt::StrongFocus);
+}
+
+void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton) {
+        m_isDragging = false;
+        m_draggedVertexIndex = -1;
+    }
+
+    QWidget::mouseReleaseEvent(event);
+}
+
+void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!m_isDragging || m_draggedVertexIndex < 0)
+        return;
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QPointF pos = event->position();
+#else
+    const QPointF pos = event->pos();
+#endif
+
+    vertices[m_draggedVertexIndex] = pos;
+
+    update();
+    emit graphChanged();
+}
+
+void GraphCanvas::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete && selectedVertexIndex >= 0) {
+        const qsizetype removedIndex = selectedVertexIndex;
+        vertices.removeAt(removedIndex);
+        QVector<QPair<qsizetype, qsizetype>> newEdges;
+        newEdges.reserve(edges.size());
+
+        for (const auto &edge : edges) {
+            qsizetype from = edge.first;
+            qsizetype to = edge.second;
+
+            if (from == removedIndex || to == removedIndex)
+                continue;
+            if (from > removedIndex) --from;
+            if (to > removedIndex) --to;
+
+            newEdges.append(qMakePair(from, to));
+        }
+        edges = std::move(newEdges);
+        selectedVertexIndex = -1;
+        m_highlights.clear();
+        update();
+        emit graphChanged();
+        return;
+    }
+
+    QWidget::keyPressEvent(event);
 }
 
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
 {
+    setFocus();
     if (event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
         return;
@@ -49,14 +109,17 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     }
 
     if (clickedVertexIndex >= 0) {
+        m_isDragging = true;
+        m_draggedVertexIndex = clickedVertexIndex;
+
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
             edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
             selectedVertexIndex = -1;
-
             emit graphChanged();
         } else {
             selectedVertexIndex = clickedVertexIndex;
         }
+
         update();
         return;
     }
