@@ -25,6 +25,8 @@ public:
     void highlightEdge(int from, int to, const QColor &color);
     void clearHighlights();
 
+    void deleteVertex(qsizetype index);
+
 signals:
     void graphChanged();  // сигнал: граф изменился
 
@@ -32,6 +34,7 @@ signals:
 protected:
     void mousePressEvent(QMouseEvent *event) override; // Клик мышью
     void paintEvent(QPaintEvent *event) override;      // Вызывается когда нужно перерисовать виджет
+    void keyPressEvent(QKeyEvent *event) override;     // Нажатие клавиш
 
 private:
     QVector<QPointF> vertices;                   // Координаты всех вершин

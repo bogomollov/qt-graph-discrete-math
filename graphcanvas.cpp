@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <QString>
 #include <QColor>
+#include <QKeyEvent>
 
 #include <utility>
 
@@ -18,6 +19,7 @@ GraphCanvas::GraphCanvas(QWidget *parent)
     setAutoFillBackground(false);
     setMinimumSize(640, 480);
     setCursor(Qt::CrossCursor);
+    setFocusPolicy(Qt::StrongFocus);
 }
 
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
@@ -157,6 +159,55 @@ void GraphCanvas::clear()
     edges.clear();
     selectedVertexIndex = -1;
     m_highlights.clear();
+    update();
+    emit graphChanged();
+}
+
+void GraphCanvas::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Delete) {
+        if (selectedVertexIndex >= 0) {
+            int oldCount = vertices.size();
+            deleteVertex(selectedVertexIndex);
+            // Можно добавить сигнал или просто обновить
+        }
+    }
+
+    QWidget::keyPressEvent(event); // Передаём событие дальше
+}
+
+void GraphCanvas::deleteVertex(qsizetype index)
+{
+    if (index < 0 || index >= vertices.size())
+        return;
+
+    // Удаляем вершину
+    vertices.remove(index);
+
+    // Обновляем индексы в рёбрах
+    QVector<QPair<qsizetype, qsizetype>> newEdges;
+    for (const auto &edge : edges) {
+        qsizetype from = edge.first;
+        qsizetype to = edge.second;
+
+        // Если ребро не связано с удаляемой вершиной
+        if (from != index && to != index) {
+            // Корректируем индексы (сдвигаем влево те, что больше удалённой)
+            if (from > index) from--;
+            if (to > index) to--;
+            newEdges.append(qMakePair(from, to));
+        }
+        // Ребро, связанное с удаляемой вершиной, просто пропускаем (удаляется)
+    }
+
+    edges = newEdges;
+
+    // Снимаем выделение
+    selectedVertexIndex = -1;
+
+    // Очищаем подсветку
+    m_highlights.clear();
+
     update();
     emit graphChanged();
 }
