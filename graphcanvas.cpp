@@ -11,6 +11,7 @@
 namespace {
 constexpr qreal vertexRadius = 24.0; // Радиус вершины
 constexpr qreal vertexClickTolerance = 6.0;
+const QColor startVertexColor(255, 0, 0); // Начальная вершина
 }
 
 GraphCanvas::GraphCanvas(QWidget *parent)
@@ -80,6 +81,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(255, 174, 24), 2));
     painter.setBrush(QColor(255, 205, 112));
 
+    // Рисуем рёбра
     painter.setPen(QPen(QColor(120, 120, 120), 2));
     for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
         painter.drawLine(vertices.at(edge.first), vertices.at(edge.second));
@@ -103,6 +105,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     QFont vertexLabelFont = painter.font();
     vertexLabelFont.setBold(true);
 
+    // Рисуем вершины
     for (qsizetype index = 0; index < vertices.size(); ++index) {
         const QPointF &vertex = vertices.at(index);
         const QRectF vertexRect(vertex.x() - vertexRadius,
@@ -110,9 +113,16 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
                                 vertexRadius * 2.0,
                                 vertexRadius * 2.0);
 
-        const QColor outlineColor = index == selectedVertexIndex
-                                        ? QColor(214, 130, 0)
-                                        : QColor(255, 174, 24);
+        // Определяем цвет обводки
+        QColor outlineColor;
+        if (index == startVertexIndex) {
+            outlineColor = startVertexColor;  // Фиолетовый для стартовой
+        } else if (index == selectedVertexIndex) {
+            outlineColor = QColor(214, 130, 0);  // Оранжевый для выбранной
+        } else {
+            outlineColor = QColor(255, 174, 24); // Обычный цвет
+        }
+
         painter.setPen(QPen(outlineColor, 2));
         painter.drawEllipse(vertex, vertexRadius, vertexRadius);
         painter.setPen(QColor(34, 34, 34));
@@ -148,6 +158,7 @@ void GraphCanvas::setData(const QVector<QPointF> &newVertices,
     vertices = newVertices;
     edges = newEdges;
     selectedVertexIndex = -1;
+    startVertexIndex = -1;
     m_highlights.clear();
     update();
     emit graphChanged();
@@ -158,6 +169,7 @@ void GraphCanvas::clear()
     vertices.clear();
     edges.clear();
     selectedVertexIndex = -1;
+    startVertexIndex = -1;
     m_highlights.clear();
     update();
     emit graphChanged();
@@ -210,4 +222,21 @@ void GraphCanvas::deleteVertex(qsizetype index)
 
     update();
     emit graphChanged();
+}
+
+// --- Работа со стартовой вершиной ---
+void GraphCanvas::setStartVertex(qsizetype index)
+{
+    if (index >= 0 && index < vertices.size()) {
+        startVertexIndex = index;
+    } else {
+        startVertexIndex = -1;
+    }
+    update(); // Перерисовываем
+}
+
+void GraphCanvas::clearStartVertex()
+{
+    startVertexIndex = -1;
+    update();
 }

@@ -69,6 +69,14 @@ void MainWindow::on_bfsButton_clicked()
 
     int startVertex = ui->startVertexSpin->value() - 1;
 
+    // Устанавливаем стартовую вершину на холсте (фиолетовая подсветка)
+    graphCanvas->setStartVertex(startVertex);
+
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
+    }
+
     if (animator->isRunning()) {
         animator->stop();
         return;
@@ -99,6 +107,14 @@ void MainWindow::on_dfsButton_clicked()
     }
 
     int startVertex = ui->startVertexSpin->value() - 1;
+
+    // Устанавливаем стартовую вершину на холсте (фиолетовая подсветка)
+    graphCanvas->setStartVertex(startVertex);
+
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
+    }
 
     if (animator->isRunning()) {
         animator->stop();

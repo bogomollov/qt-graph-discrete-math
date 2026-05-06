@@ -27,6 +27,11 @@ public:
 
     void deleteVertex(qsizetype index);
 
+    // Методы для работы со стартовой вершиной
+    void setStartVertex(qsizetype index);
+    qsizetype getStartVertex() const { return startVertexIndex; }
+    void clearStartVertex();
+
 signals:
     void graphChanged();  // сигнал: граф изменился
 
@@ -40,6 +45,7 @@ private:
     QVector<QPointF> vertices;                   // Координаты всех вершин
     QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
     qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
+    qsizetype startVertexIndex = -1;             // Стартовая вершина
 
     struct Highlight {
         bool isEdge = false;
