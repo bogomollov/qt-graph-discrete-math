@@ -5,6 +5,7 @@
 #include <QPair>   // пара значений (first, second)
 #include <QVector> // динамический массив
 #include <QWidget>
+#include <QColor>
 
 class GraphCanvas : public QWidget
 {
@@ -27,6 +28,8 @@ public:
     void highlightVertex(int index, const QColor &color);
     void highlightEdge(int from, int to, const QColor &color);
     void clearHighlights();
+    void setVertexColors(const QVector<QColor> &colors);
+    void clearVertexColors();
 
     void deleteVertex(qsizetype index);
 
@@ -50,6 +53,7 @@ private:
     QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
     qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
     qsizetype startVertexIndex = -1;             // Стартовая вершина
+    QVector<QColor> m_vertexColors;
     bool m_isDragging = false;
     qsizetype m_draggedVertexIndex = -1;
 

@@ -164,6 +164,32 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
     return treeEdges;
 }
 
+QVector<int> GraphAlgorithms::greedyColoring(const GraphData &graph)
+{
+    const int vertexCount = graph.vertexCount();
+    QVector<int> colors(vertexCount, -1);
+
+    for (int vertex = 0; vertex < vertexCount; ++vertex) {
+        QVector<bool> usedColors(vertexCount, false);
+
+        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+            const int neighbor = static_cast<int>(neighborIndex);
+            if (neighbor >= 0 && neighbor < vertexCount && colors[neighbor] >= 0) {
+                usedColors[colors[neighbor]] = true;
+            }
+        }
+
+        int color = 0;
+        while (color < usedColors.size() && usedColors[color]) {
+            ++color;
+        }
+
+        colors[vertex] = color;
+    }
+
+    return colors;
+}
+
 QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVertex)
 {
     QVector<AlgorithmStep> steps;

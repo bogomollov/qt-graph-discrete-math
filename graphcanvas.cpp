@@ -73,6 +73,7 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
         edges = std::move(newEdges);
         selectedVertexIndex = -1;
         m_highlights.clear();
+        m_vertexColors.clear();
         update();
         emit graphChanged();
         return;
@@ -117,6 +118,7 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
             edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
             selectedVertexIndex = -1;
+            m_vertexColors.clear();
             emit graphChanged();
         } else {
             selectedVertexIndex = clickedVertexIndex;
@@ -128,6 +130,7 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
 
     vertices.append(clickPosition);
     selectedVertexIndex = -1;
+    m_vertexColors.clear();
     emit graphChanged();
     update();
 }
@@ -186,6 +189,11 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         }
 
         painter.setPen(QPen(outlineColor, 2));
+        if (index < m_vertexColors.size() && m_vertexColors.at(index).isValid()) {
+            painter.setBrush(m_vertexColors.at(index));
+        } else {
+            painter.setBrush(QColor(255, 205, 112));
+        }
         painter.drawEllipse(vertex, vertexRadius, vertexRadius);
         painter.setPen(QColor(34, 34, 34));
         painter.setFont(vertexLabelFont);
@@ -214,6 +222,19 @@ void GraphCanvas::clearHighlights()
     update();
 }
 
+void GraphCanvas::setVertexColors(const QVector<QColor> &colors)
+{
+    m_vertexColors = colors;
+    m_vertexColors.resize(vertices.size());
+    update();
+}
+
+void GraphCanvas::clearVertexColors()
+{
+    m_vertexColors.clear();
+    update();
+}
+
 void GraphCanvas::setData(const QVector<QPointF> &newVertices,
                           const QVector<QPair<qsizetype, qsizetype>> &newEdges)
 {
@@ -222,6 +243,7 @@ void GraphCanvas::setData(const QVector<QPointF> &newVertices,
     selectedVertexIndex = -1;
     startVertexIndex = -1;
     m_highlights.clear();
+    m_vertexColors.clear();
     update();
     emit graphChanged();
 }
@@ -233,6 +255,7 @@ void GraphCanvas::clear()
     selectedVertexIndex = -1;
     startVertexIndex = -1;
     m_highlights.clear();
+    m_vertexColors.clear();
     update();
     emit graphChanged();
 }
@@ -268,6 +291,7 @@ void GraphCanvas::deleteVertex(qsizetype index)
 
     // Очищаем подсветку
     m_highlights.clear();
+    m_vertexColors.clear();
 
     update();
     emit graphChanged();

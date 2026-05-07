@@ -30,6 +30,7 @@ private slots:
     void on_dfsButton_clicked();
     void on_minSpanningTreeButton_clicked();
     void on_maxSpanningTreeButton_clicked();
+    void on_greedyColoringButton_clicked();
     void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();

@@ -9,6 +9,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDir>
+#include <QColor>
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -189,6 +190,58 @@ void MainWindow::buildSpanningTree(bool minimum)
             .arg(minimum ? "Минимальное" : "Максимальное")
             .arg(edges.isEmpty() ? "нет рёбер" : edges.join(", "))
             .arg(QString::number(totalWeight, 'f', 2)));
+}
+
+void MainWindow::on_greedyColoringButton_clicked()
+{
+    if (animator->isRunning()) {
+        animator->stop();
+    }
+
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
+
+    if (graphData->vertexCount() == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    const QVector<int> colorIndexes = algorithms->greedyColoring(*graphData);
+    QVector<QColor> vertexColors;
+    vertexColors.reserve(colorIndexes.size());
+
+    const QVector<QColor> palette = {
+        QColor(244, 111, 96),
+        QColor(87, 167, 115),
+        QColor(89, 143, 206),
+        QColor(238, 184, 80),
+        QColor(169, 121, 204),
+        QColor(77, 181, 183),
+        QColor(218, 132, 65),
+        QColor(132, 158, 70)
+    };
+
+    int colorCount = 0;
+    for (int colorIndex : colorIndexes) {
+        colorCount = qMax(colorCount, colorIndex + 1);
+        if (colorIndex >= 0 && colorIndex < palette.size()) {
+            vertexColors.append(palette[colorIndex]);
+        } else {
+            vertexColors.append(QColor::fromHsv((colorIndex * 47) % 360, 135, 225));
+        }
+    }
+
+    graphCanvas->clearHighlights();
+    graphCanvas->setVertexColors(vertexColors);
+
+    QStringList assignments;
+    for (int vertex = 0; vertex < colorIndexes.size(); ++vertex) {
+        assignments << QString("%1:%2").arg(vertex + 1).arg(colorIndexes[vertex] + 1);
+    }
+
+    ui->logOutput->appendPlainText(
+        QString("Жадная раскраска: использовано цветов: %1\nВершины: %2")
+            .arg(colorCount)
+            .arg(assignments.join(", ")));
 }
 
 void MainWindow::on_actionNewGraph_triggered()
