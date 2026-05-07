@@ -28,6 +28,8 @@ public:
 private slots:
     void on_bfsButton_clicked();
     void on_dfsButton_clicked();
+    void on_minSpanningTreeButton_clicked();
+    void on_maxSpanningTreeButton_clicked();
     void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();
@@ -43,6 +45,7 @@ private:
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
+    void buildSpanningTree(bool minimum);
 
     QString m_lastSavePath;  // Запоминаем последний путь сохранения
 };

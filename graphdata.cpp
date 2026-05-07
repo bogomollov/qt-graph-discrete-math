@@ -12,6 +12,16 @@ int GraphData::vertexCount() const
     return m_vertices.size();
 }
 
+const QVector<QPointF> &GraphData::vertices() const
+{
+    return m_vertices;
+}
+
+const QVector<QPair<qsizetype, qsizetype>> &GraphData::edges() const
+{
+    return m_edges;
+}
+
 QVector<qsizetype> GraphData::getNeighbors(qsizetype vertexIndex) const
 {
     QVector<qsizetype> neighbors;
