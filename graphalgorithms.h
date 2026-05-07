@@ -34,6 +34,7 @@ public:
                                                       bool minimum,
                                                       double *totalWeight = nullptr);
     QVector<int> greedyColoring(const GraphData &graph);
+    QVector<int> backtrackingColoring(const GraphData &graph);
 };
 
 #endif

@@ -205,7 +205,27 @@ void MainWindow::on_greedyColoringButton_clicked()
         return;
     }
 
-    const QVector<int> colorIndexes = algorithms->greedyColoring(*graphData);
+    applyColoring("Жадная раскраска", algorithms->greedyColoring(*graphData));
+}
+
+void MainWindow::on_backtrackingColoringButton_clicked()
+{
+    if (animator->isRunning()) {
+        animator->stop();
+    }
+
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
+
+    if (graphData->vertexCount() == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    applyColoring("Раскраска с возвратом", algorithms->backtrackingColoring(*graphData));
+}
+
+void MainWindow::applyColoring(const QString &title, const QVector<int> &colorIndexes)
+{
     QVector<QColor> vertexColors;
     vertexColors.reserve(colorIndexes.size());
 
@@ -239,7 +259,8 @@ void MainWindow::on_greedyColoringButton_clicked()
     }
 
     ui->logOutput->appendPlainText(
-        QString("Жадная раскраска: использовано цветов: %1\nВершины: %2")
+        QString("%1: использовано цветов: %2\nВершины: %3")
+            .arg(title)
             .arg(colorCount)
             .arg(assignments.join(", ")));
 }

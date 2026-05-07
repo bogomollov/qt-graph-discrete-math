@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <qplaintextedit.h>
+#include <QVector>
+#include <QString>
 
 class GraphCanvas;
 class GraphData;
@@ -31,6 +33,7 @@ private slots:
     void on_minSpanningTreeButton_clicked();
     void on_maxSpanningTreeButton_clicked();
     void on_greedyColoringButton_clicked();
+    void on_backtrackingColoringButton_clicked();
     void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();
@@ -47,6 +50,7 @@ private:
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
     void buildSpanningTree(bool minimum);
+    void applyColoring(const QString &title, const QVector<int> &colorIndexes);
 
     QString m_lastSavePath;  // Запоминаем последний путь сохранения
 };
