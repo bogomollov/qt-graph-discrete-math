@@ -144,6 +144,53 @@ void MainWindow::on_dfsButton_clicked()
 }
 
 // --- Меню Файл ---
+void MainWindow::on_minSpanningTreeButton_clicked()
+{
+    buildSpanningTree(true);
+}
+
+void MainWindow::on_maxSpanningTreeButton_clicked()
+{
+    buildSpanningTree(false);
+}
+
+void MainWindow::buildSpanningTree(bool minimum)
+{
+    if (animator->isRunning()) {
+        animator->stop();
+    }
+
+    const QVector<QPointF> vertices = graphCanvas->getVertices();
+    graphData->setData(vertices, graphCanvas->getEdges());
+
+    if (graphData->vertexCount() == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    double totalWeight = 0.0;
+    const QVector<QPair<qsizetype, qsizetype>> treeEdges =
+        algorithms->spanningTree(*graphData, minimum, &totalWeight);
+
+    if (graphData->vertexCount() > 1 && treeEdges.size() != graphData->vertexCount() - 1) {
+        ui->logOutput->appendPlainText("Ошибка: граф несвязный, остовное дерево построить нельзя.");
+        return;
+    }
+
+    graphCanvas->setData(vertices, treeEdges);
+
+    QStringList edges;
+    for (const auto &edge : treeEdges) {
+        edges << QString("%1-%2").arg(edge.first + 1).arg(edge.second + 1);
+    }
+
+    ui->logOutput->appendPlainText(
+        QString("%1 остовное дерево: %2\nСуммарная длина: %3")
+            .arg(minimum ? "Минимальное" : "Максимальное")
+            .arg(edges.isEmpty() ? "нет рёбер" : edges.join(", "))
+            .arg(QString::number(totalWeight, 'f', 2)));
+}
+
 void MainWindow::on_actionNewGraph_triggered()
 {
     // Спрашиваем подтверждение, если граф не пустой

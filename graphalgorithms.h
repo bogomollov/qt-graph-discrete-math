@@ -3,6 +3,7 @@
 
 #include <QVector>
 #include <QPair>
+#include <QString>
 
 class GraphData;
 
@@ -29,6 +30,9 @@ public:
 
     QVector<AlgorithmStep> bfs(const GraphData &graph, int startVertex);
     QVector<AlgorithmStep> dfs(const GraphData &graph, int startVertex);
+    QVector<QPair<qsizetype, qsizetype>> spanningTree(const GraphData &graph,
+                                                      bool minimum,
+                                                      double *totalWeight = nullptr);
 };
 
 #endif

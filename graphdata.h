@@ -15,6 +15,8 @@ public:
 
     int vertexCount() const;
     QVector<qsizetype> getNeighbors(qsizetype vertexIndex) const;
+    const QVector<QPointF> &vertices() const;
+    const QVector<QPair<qsizetype, qsizetype>> &edges() const;
 
 private:
     QVector<QPointF> m_vertices;
