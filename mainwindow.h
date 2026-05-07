@@ -34,6 +34,7 @@ private slots:
     void on_maxSpanningTreeButton_clicked();
     void on_greedyColoringButton_clicked();
     void on_backtrackingColoringButton_clicked();
+    void on_clearColoringButton_clicked();
     void on_actionNewGraph_triggered();
     void on_actionSaveGraph_triggered();
     void on_actionLoadGraph_triggered();

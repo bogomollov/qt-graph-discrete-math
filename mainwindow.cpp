@@ -224,6 +224,12 @@ void MainWindow::on_backtrackingColoringButton_clicked()
     applyColoring("Раскраска с возвратом", algorithms->backtrackingColoring(*graphData));
 }
 
+void MainWindow::on_clearColoringButton_clicked()
+{
+    graphCanvas->clearVertexColors();
+    ui->logOutput->appendPlainText("Раскраска очищена.");
+}
+
 void MainWindow::applyColoring(const QString &title, const QVector<int> &colorIndexes)
 {
     QVector<QColor> vertexColors;
