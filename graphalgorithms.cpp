@@ -57,6 +57,45 @@ struct WeightedEdge {
     qsizetype to = -1;
     double weight = 0.0;
 };
+
+bool canUseColor(const QVector<QVector<int>> &adjacency,
+                 const QVector<int> &colors,
+                 int vertex,
+                 int color)
+{
+    for (int neighbor : adjacency[vertex]) {
+        if (colors[neighbor] == color) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool colorByBacktracking(const QVector<QVector<int>> &adjacency,
+                         const QVector<int> &order,
+                         int position,
+                         int colorLimit,
+                         QVector<int> &colors)
+{
+    if (position == order.size()) {
+        return true;
+    }
+
+    const int vertex = order[position];
+    for (int color = 0; color < colorLimit; ++color) {
+        if (!canUseColor(adjacency, colors, vertex, color)) {
+            continue;
+        }
+
+        colors[vertex] = color;
+        if (colorByBacktracking(adjacency, order, position + 1, colorLimit, colors)) {
+            return true;
+        }
+        colors[vertex] = -1;
+    }
+
+    return false;
+}
 }
 
 QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVertex)
@@ -162,6 +201,71 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
     }
 
     return treeEdges;
+}
+
+QVector<int> GraphAlgorithms::greedyColoring(const GraphData &graph)
+{
+    const int vertexCount = graph.vertexCount();
+    QVector<int> colors(vertexCount, -1);
+
+    for (int vertex = 0; vertex < vertexCount; ++vertex) {
+        QVector<bool> usedColors(vertexCount, false);
+
+        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+            const int neighbor = static_cast<int>(neighborIndex);
+            if (neighbor >= 0 && neighbor < vertexCount && colors[neighbor] >= 0) {
+                usedColors[colors[neighbor]] = true;
+            }
+        }
+
+        int color = 0;
+        while (color < usedColors.size() && usedColors[color]) {
+            ++color;
+        }
+
+        colors[vertex] = color;
+    }
+
+    return colors;
+}
+
+QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
+{
+    const int vertexCount = graph.vertexCount();
+    QVector<QVector<int>> adjacency(vertexCount);
+
+    for (int vertex = 0; vertex < vertexCount; ++vertex) {
+        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+            const int neighbor = static_cast<int>(neighborIndex);
+            if (neighbor >= 0 && neighbor < vertexCount && neighbor != vertex
+                && !adjacency[vertex].contains(neighbor)) {
+                adjacency[vertex].append(neighbor);
+            }
+        }
+    }
+
+    QVector<int> order;
+    order.reserve(vertexCount);
+    for (int vertex = 0; vertex < vertexCount; ++vertex) {
+        order.append(vertex);
+    }
+
+    std::sort(order.begin(), order.end(),
+              [&adjacency](int left, int right) {
+                  if (adjacency[left].size() == adjacency[right].size()) {
+                      return left < right;
+                  }
+                  return adjacency[left].size() > adjacency[right].size();
+              });
+
+    for (int colorLimit = 1; colorLimit <= vertexCount; ++colorLimit) {
+        QVector<int> colors(vertexCount, -1);
+        if (colorByBacktracking(adjacency, order, 0, colorLimit, colors)) {
+            return colors;
+        }
+    }
+
+    return QVector<int>(vertexCount, -1);
 }
 
 QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVertex)

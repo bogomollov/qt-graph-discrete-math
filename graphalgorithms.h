@@ -33,6 +33,8 @@ public:
     QVector<QPair<qsizetype, qsizetype>> spanningTree(const GraphData &graph,
                                                       bool minimum,
                                                       double *totalWeight = nullptr);
+    QVector<int> greedyColoring(const GraphData &graph);
+    QVector<int> backtrackingColoring(const GraphData &graph);
 };
 
 #endif
