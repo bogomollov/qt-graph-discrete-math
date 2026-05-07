@@ -61,18 +61,127 @@
     <item row="0" column="1">
      <widget class="QWidget" name="rightPanel" native="true">
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
-        <widget class="QLabel" name="label">
+       <item row="3" column="0">
+        <widget class="QPushButton" name="dfsButton">
          <property name="text">
-          <string>Стартовая вершина:</string>
+          <string>DFS</string>
          </property>
         </widget>
        </item>
+       
+        <item row="8" column="0">
+            <widget class="QGroupBox" name="groupBoxSettings">
+            <property name="title">
+            <string>Настройки</string>
+            </property>
+            <property name="flat">
+            <bool>true</bool>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayoutSettings">
+            <item>
+            <widget class="QLabel" name="labelAnimationSpeed">
+                <property name="text">
+                <string>Скорость анимации (мс):</string>
+                </property>
+            </widget>
+            </item>
+            <item>
+            <widget class="QComboBox" name="animationSpeedCombo">
+                <item>
+                <property name="text">
+                <string>1000</string>
+                </property>
+                </item>
+                <item>
+                <property name="text">
+                <string>800</string>
+                </property>
+                </item>
+                <item>
+                <property name="text">
+                <string>600</string>
+                </property>
+                </item>
+                <item>
+                <property name="text">
+                <string>400</string>
+                </property>
+                </item>
+                <item>
+                <property name="text">
+                <string>200</string>
+                </property>
+                </item>
+            </widget>
+            </item>
+            </layout>
+            </widget>
+        </item>
+
        <item row="1" column="0">
         <widget class="QSpinBox" name="startVertexSpin">
          <property name="minimum">
           <number>1</number>
          </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QGroupBox" name="groupBoxSpanningTree">
+         <property name="title">
+          <string>Построение остовного дерева</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayoutSpanningTree">
+          <item>
+           <widget class="QPushButton" name="minSpanningTreeButton">
+            <property name="text">
+             <string>Мин.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="maxSpanningTreeButton">
+            <property name="text">
+             <string>Макс.</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QGroupBox" name="groupBoxColoring">
+         <property name="title">
+          <string>Раскраска графа</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayoutColoring">
+          <item>
+           <widget class="QPushButton" name="greedyColoringButton">
+            <property name="text">
+             <string>Жадная</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="backtrackingColoringButton">
+            <property name="text">
+             <string>С возвратом</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="clearColoringButton">
+            <property name="text">
+             <string>Очистить</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item row="2" column="0">
@@ -82,14 +191,66 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QPushButton" name="dfsButton">
+       <item row="4" column="0">
+        <widget class="QGroupBox" name="groupBoxDijkstra">
+         <property name="title">
+          <string>Алгоритм Дейкстры</string>
+         </property>
+         <property name="flat">
+          <bool>true</bool>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayoutDijkstra">
+          <item>
+           <widget class="QSpinBox" name="dijkstraStartSpin">
+            <property name="prefix">
+             <string>от </string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>999</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelDijkstraTo">
+            <property name="text">
+             <string>→</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QSpinBox" name="dijkstraEndSpin">
+            <property name="prefix">
+             <string>до </string>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>999</number>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="dijkstraButton">
+            <property name="text">
+             <string>Найти</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
          <property name="text">
-          <string>DFS</string>
+          <string>Стартовая вершина:</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="7" column="0">
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>
@@ -97,7 +258,7 @@
          <property name="sizeHint" stdset="0">
           <size>
            <width>20</width>
-           <height>368</height>
+           <height>40</height>
           </size>
          </property>
         </spacer>

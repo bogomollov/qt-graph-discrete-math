@@ -13,9 +13,12 @@ class GraphCanvas : public QWidget
 public:
     explicit GraphCanvas(QWidget *parent = nullptr);
 
+    // Геттеры для получения данных
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
+    qsizetype getStartVertex() const { return startVertexIndex; }
 
+    // Сеттеры для установки данных
     void setData(const QVector<QPointF> &newVertices,
                  const QVector<QPair<qsizetype, qsizetype>> &newEdges);
     void clear();
@@ -25,21 +28,28 @@ public:
     void highlightEdge(int from, int to, const QColor &color);
     void clearHighlights();
 
+    void deleteVertex(qsizetype index);
+
+    // Методы для работы со стартовой вершиной
+    void setStartVertex(qsizetype index);
+    void clearStartVertex();
+
 signals:
     void graphChanged();  // сигнал: граф изменился
 
-// Обработчики событий
+    // Обработчики событий
 protected:
     void mousePressEvent(QMouseEvent *event) override; // Клик мышью
     void paintEvent(QPaintEvent *event) override;      // Вызывается когда нужно перерисовать виджет
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;     // Нажатие клавиш
 
 private:
     QVector<QPointF> vertices;                   // Координаты всех вершин
     QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
     qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
+    qsizetype startVertexIndex = -1;             // Стартовая вершина
     bool m_isDragging = false;
     qsizetype m_draggedVertexIndex = -1;
 

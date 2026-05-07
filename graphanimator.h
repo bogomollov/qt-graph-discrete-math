@@ -19,6 +19,7 @@ public:
     void start(const QVector<AlgorithmStep> &steps);
     void stop();
     bool isRunning() const;
+    void setAnimationSpeed(int speed); // Метод для установки скорости анимации
 
 signals:
     void logMessage(const QString &message);

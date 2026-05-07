@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     , animator(new GraphAnimator(this))
 {
     ui->setupUi(this);
+    ui->animationSpeedCombo->setCurrentText("600"); // Базовая задержка
     setWindowTitle(tr("qt-graph-discrete-math"));
 
     // Холст в ScrollArea
@@ -33,10 +34,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(graphCanvas, &GraphCanvas::graphChanged, [this]() {
         graphData->setData(graphCanvas->getVertices(),
                            graphCanvas->getEdges());
-        ui->logOutput->appendPlainText(
-            QString("Граф обновлён: %1 вершин, %2 рёбер")
-                .arg(graphData->vertexCount())
-                .arg(graphCanvas->getEdges().size()));
     });
 
     animator->setCanvas(graphCanvas);
@@ -47,6 +44,17 @@ MainWindow::MainWindow(QWidget *parent)
         ui->bfsButton->setEnabled(true);
         ui->dfsButton->setEnabled(true);
     });
+
+    // Подключаем изменение скорости анимации
+    connect(ui->animationSpeedCombo, &QComboBox::currentTextChanged, [this](const QString &text) {
+        int speedValue = text.toInt();
+        int delay = 1200 - speedValue;
+        animator->setAnimationSpeed(delay);
+    });
+
+    // Устанавливаем начальную скорость
+    int initialSpeedValue = ui->animationSpeedCombo->currentText().toInt();
+    animator->setAnimationSpeed(1200 - initialSpeedValue);
 }
 
 // --- Деструктор ---
@@ -68,6 +76,14 @@ void MainWindow::on_bfsButton_clicked()
     }
 
     int startVertex = ui->startVertexSpin->value() - 1;
+
+    // Устанавливаем стартовую вершину на холсте (фиолетовая подсветка)
+    graphCanvas->setStartVertex(startVertex);
+
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
+    }
 
     if (animator->isRunning()) {
         animator->stop();
@@ -99,6 +115,14 @@ void MainWindow::on_dfsButton_clicked()
     }
 
     int startVertex = ui->startVertexSpin->value() - 1;
+
+    // Устанавливаем стартовую вершину на холсте (фиолетовая подсветка)
+    graphCanvas->setStartVertex(startVertex);
+
+    if (animator->isRunning()) {
+        animator->stop();
+        return;
+    }
 
     if (animator->isRunning()) {
         animator->stop();
@@ -249,7 +273,11 @@ void MainWindow::on_actionAdjacencyList_triggered()
 void MainWindow::on_actionAbout_triggered()
 {
     QMessageBox::about(this, "О программе",
-                       "qt-graph-discrete-math v0.1\n\n"
+                       "qt-graph-discrete-math v1.0\n\n"
                        "Программа для построения графов\n"
-                       "и визуализации алгоритмов BFS и DFS.");
+                       "и визуализации работы алгоритмов\n\n"
+                       "Шнякина Елена Александровна - руководитель\n"
+                       "Муллагалиев Арслан Артурович - разработчик\n"
+                       "Богомолов Богдан - разработчик\n"
+                       );
 }
