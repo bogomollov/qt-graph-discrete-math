@@ -34,10 +34,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(graphCanvas, &GraphCanvas::graphChanged, [this]() {
         graphData->setData(graphCanvas->getVertices(),
                            graphCanvas->getEdges());
-        ui->logOutput->appendPlainText(
-            QString("Граф обновлён: %1 вершин, %2 рёбер")
-                .arg(graphData->vertexCount())
-                .arg(graphCanvas->getEdges().size()));
     });
 
     animator->setCanvas(graphCanvas);
