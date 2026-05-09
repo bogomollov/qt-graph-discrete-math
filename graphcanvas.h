@@ -18,6 +18,7 @@ public:
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
     qsizetype getStartVertex() const { return startVertexIndex; }
+    bool isDirected() const { return m_isDirected; }
 
     // Сеттеры для установки данных
     void setData(const QVector<QPointF> &newVertices,
@@ -36,6 +37,8 @@ public:
     // Методы для работы со стартовой вершиной
     void setStartVertex(qsizetype index);
     void clearStartVertex();
+
+    void setDirected(bool directed);
 
 signals:
     void graphChanged();  // сигнал: граф изменился
@@ -56,6 +59,7 @@ private:
     QVector<QColor> m_vertexColors;
     bool m_isDragging = false;
     qsizetype m_draggedVertexIndex = -1;
+    bool m_isDirected = false;
 
     struct Highlight {
         bool isEdge = false;

@@ -7,11 +7,35 @@
 #include <QKeyEvent>
 
 #include <utility>
+#include <cmath>
 
 namespace {
-constexpr qreal vertexRadius = 24.0; // Радиус вершины
+constexpr qreal vertexRadius = 24.0;
 constexpr qreal vertexClickTolerance = 6.0;
-const QColor startVertexColor(255, 0, 0); // Начальная вершина
+constexpr qreal arrowSize = 10.0;
+const QColor startVertexColor(255, 0, 0);
+
+void drawArrowHead(QPainter &painter, const QPointF &from, const QPointF &to)
+{
+    const QPointF delta = to - from;
+    const qreal length = std::hypot(delta.x(), delta.y());
+    if (length < 1e-6)
+        return;
+
+    // Unit vector along the edge
+    const QPointF unit = delta / length;
+    // Tip of arrowhead sits on the circle boundary of the target vertex
+    const QPointF tip = to - unit * vertexRadius;
+
+    // Two base points of the arrowhead triangle
+    const QPointF perp(-unit.y(), unit.x());
+    const QPointF base = tip - unit * arrowSize;
+    const QPointF p1 = base + perp * (arrowSize * 0.5);
+    const QPointF p2 = base - perp * (arrowSize * 0.5);
+
+    const QPolygonF arrow = {tip, p1, p2};
+    painter.drawPolygon(arrow);
+}
 }
 
 GraphCanvas::GraphCanvas(QWidget *parent)
@@ -150,6 +174,13 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(120, 120, 120), 2));
     for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
         painter.drawLine(vertices.at(edge.first), vertices.at(edge.second));
+        if (m_isDirected) {
+            painter.setBrush(QColor(120, 120, 120));
+            painter.setPen(Qt::NoPen);
+            drawArrowHead(painter, vertices.at(edge.first), vertices.at(edge.second));
+            painter.setPen(QPen(QColor(120, 120, 120), 2));
+            painter.setBrush(Qt::NoBrush);
+        }
     }
 
     // Отрисовка подсветки
@@ -158,6 +189,13 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             QPen pen(hl.color, 3);
             painter.setPen(pen);
             painter.drawLine(vertices.at(hl.v1), vertices.at(hl.v2));
+            if (m_isDirected) {
+                painter.setBrush(hl.color);
+                painter.setPen(Qt::NoPen);
+                drawArrowHead(painter, vertices.at(hl.v1), vertices.at(hl.v2));
+                painter.setPen(pen);
+                painter.setBrush(Qt::NoBrush);
+            }
         } else {
             QPen pen(hl.color, 3);
             painter.setPen(pen);
@@ -311,5 +349,11 @@ void GraphCanvas::setStartVertex(qsizetype index)
 void GraphCanvas::clearStartVertex()
 {
     startVertexIndex = -1;
+    update();
+}
+
+void GraphCanvas::setDirected(bool directed)
+{
+    m_isDirected = directed;
     update();
 }
