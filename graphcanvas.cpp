@@ -203,7 +203,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             const QPointF &b = vertices.at(edge.second);
             const QPointF delta = b - a;
             const qreal dist = std::hypot(delta.x(), delta.y());
-            const QString label = QString::number(qRound(dist));
+            const QString label = QString::number(qMax(1LL, qRound(dist) - qRound(minVertexDistance) + 1));
             const QFontMetrics fm(weightFont);
             const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
             // Skip label if edge is too short to place it clear of both vertices
