@@ -29,6 +29,7 @@ public:
 
     bool isDirected() const { return m_isDirected; }
     void setDirected(bool directed) { m_isDirected = directed; }
+    QVector<qsizetype> getNeighborsUndirected(qsizetype vertexIndex) const;
 
 private:
     QVector<QPointF> m_vertices;

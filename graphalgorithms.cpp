@@ -212,7 +212,7 @@ QVector<int> GraphAlgorithms::greedyColoring(const GraphData &graph)
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
         QVector<bool> usedColors(vertexCount, false);
 
-        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+        for (qsizetype neighborIndex : graph.getNeighborsUndirected(vertex)) {
             const int neighbor = static_cast<int>(neighborIndex);
             if (neighbor >= 0 && neighbor < vertexCount && colors[neighbor] >= 0) {
                 usedColors[colors[neighbor]] = true;
@@ -236,7 +236,7 @@ QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
     QVector<QVector<int>> adjacency(vertexCount);
 
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
-        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+        for (qsizetype neighborIndex : graph.getNeighborsUndirected(vertex)) {
             const int neighbor = static_cast<int>(neighborIndex);
             if (neighbor >= 0 && neighbor < vertexCount && neighbor != vertex
                 && !adjacency[vertex].contains(neighbor)) {
