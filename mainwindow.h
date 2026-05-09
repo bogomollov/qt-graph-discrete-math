@@ -44,6 +44,7 @@ private slots:
     void on_actionAdjacencyList_triggered();
     void on_actionAbout_triggered();
     void on_directedToggleButton_toggled(bool checked);
+    void on_dijkstraButton_clicked();
 
 private:
     Ui::MainWindow *ui;

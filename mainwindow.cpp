@@ -144,6 +144,57 @@ void MainWindow::on_dfsButton_clicked()
     animator->start(steps);
 }
 
+void MainWindow::on_dijkstraButton_clicked()
+{
+    if (animator->isRunning())
+        animator->stop();
+
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
+
+    if (graphData->vertexCount() == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    const int from = ui->dijkstraStartSpin->value() - 1;
+    const int to   = ui->dijkstraEndSpin->value() - 1;
+
+    if (from >= graphData->vertexCount() || to >= graphData->vertexCount()) {
+        ui->logOutput->appendPlainText("Ошибка: вершина не существует.");
+        return;
+    }
+
+    double totalWeight = 0.0;
+    const QVector<QPair<qsizetype, qsizetype>> path =
+        algorithms->dijkstra(*graphData, from, to, &totalWeight);
+
+    graphCanvas->clearHighlights();
+    graphCanvas->setShowEdgeWeights(false);
+
+    if (path.isEmpty()) {
+        ui->logOutput->appendPlainText(
+            QString("Дейкстра: путь из %1 в %2 не найден.").arg(from + 1).arg(to + 1));
+        return;
+    }
+
+    const QColor pathColor(70, 130, 200);
+    QStringList steps;
+    steps << QString::number(from + 1);
+    for (const auto &edge : path) {
+        graphCanvas->highlightEdge(static_cast<int>(edge.first),
+                                   static_cast<int>(edge.second),
+                                   pathColor);
+        steps << QString::number(edge.second + 1);
+    }
+    graphCanvas->setShowEdgeWeights(true);
+
+    ui->logOutput->appendPlainText(
+        QString("Дейкстра %1→%2: %3\nДлина пути: %4")
+            .arg(from + 1).arg(to + 1)
+            .arg(steps.join(" → "))
+            .arg(QString::number(totalWeight, 'f', 2)));
+}
+
 // --- Меню Файл ---
 void MainWindow::on_minSpanningTreeButton_clicked()
 {

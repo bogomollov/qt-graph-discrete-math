@@ -2,6 +2,7 @@
 #include "graphdata.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <QQueue>
 #include <QVector>
 
@@ -309,4 +310,65 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
 
     steps.append({AlgorithmStep::Finish, -1, -1, "=== DFS завершён ==="});
     return steps;
+}
+
+QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &graph,
+                                                                int startVertex,
+                                                                int endVertex,
+                                                                double *totalWeight)
+{
+    if (totalWeight)
+        *totalWeight = 0.0;
+
+    const int n = graph.vertexCount();
+    if (n == 0 || startVertex < 0 || startVertex >= n || endVertex < 0 || endVertex >= n)
+        return {};
+
+    const double inf = std::numeric_limits<double>::infinity();
+    QVector<double> dist(n, inf);
+    QVector<int> prev(n, -1);
+    QVector<bool> visited(n, false);
+    dist[startVertex] = 0.0;
+
+    for (int iter = 0; iter < n; ++iter) {
+        // Pick unvisited vertex with smallest distance
+        int u = -1;
+        for (int i = 0; i < n; ++i) {
+            if (!visited[i] && (u < 0 || dist[i] < dist[u]))
+                u = i;
+        }
+        if (u < 0 || dist[u] == inf)
+            break;
+        visited[u] = true;
+
+        for (const auto &edge : graph.edges()) {
+            int v = -1;
+            if (static_cast<int>(edge.first) == u)
+                v = static_cast<int>(edge.second);
+            else if (!graph.isDirected() && static_cast<int>(edge.second) == u)
+                v = static_cast<int>(edge.first);
+            if (v < 0 || visited[v])
+                continue;
+
+            const QPointF delta = graph.vertices().at(u) - graph.vertices().at(v);
+            const double w = std::hypot(delta.x(), delta.y());
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                prev[v] = u;
+            }
+        }
+    }
+
+    if (dist[endVertex] == inf)
+        return {};
+
+    // Reconstruct path edges
+    QVector<QPair<qsizetype, qsizetype>> path;
+    for (int v = endVertex; prev[v] >= 0; v = prev[v])
+        path.prepend(qMakePair(static_cast<qsizetype>(prev[v]), static_cast<qsizetype>(v)));
+
+    if (totalWeight)
+        *totalWeight = dist[endVertex];
+
+    return path;
 }

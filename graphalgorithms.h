@@ -35,6 +35,10 @@ public:
                                                       double *totalWeight = nullptr);
     QVector<int> greedyColoring(const GraphData &graph);
     QVector<int> backtrackingColoring(const GraphData &graph);
+    QVector<QPair<qsizetype, qsizetype>> dijkstra(const GraphData &graph,
+                                                   int startVertex,
+                                                   int endVertex,
+                                                   double *totalWeight = nullptr);
 };
 
 #endif
