@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QKeyEvent>
 
+#include <algorithm>
 #include <utility>
 #include <cmath>
 
@@ -150,7 +151,15 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         m_draggedVertexIndex = clickedVertexIndex;
 
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
-            edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
+            const auto from = selectedVertexIndex;
+            const auto to = clickedVertexIndex;
+            const bool exists = std::any_of(edges.cbegin(), edges.cend(),
+                [from, to](const QPair<qsizetype, qsizetype> &e) {
+                    return (e.first == from && e.second == to)
+                        || (e.first == to && e.second == from);
+                });
+            if (!exists)
+                edges.append(qMakePair(from, to));
             selectedVertexIndex = -1;
             m_vertexColors.clear();
             emit graphChanged();
