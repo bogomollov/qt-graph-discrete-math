@@ -64,6 +64,8 @@ private:
     bool m_isDirected = false;
     bool m_showEdgeWeights = false;
 
+    void separateVertices();
+
     struct Highlight {
         bool isEdge = false;
         int v1 = -1;
