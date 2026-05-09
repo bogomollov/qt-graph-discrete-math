@@ -72,27 +72,46 @@ bool canUseColor(const QVector<QVector<int>> &adjacency,
     return true;
 }
 
+// Iterative backtracking coloring to avoid stack overflow on large graphs.
+// Each stack frame stores (position, nextColorToTry).
 bool colorByBacktracking(const QVector<QVector<int>> &adjacency,
                          const QVector<int> &order,
-                         int position,
                          int colorLimit,
                          QVector<int> &colors)
 {
-    if (position == order.size()) {
+    const int n = order.size();
+    if (n == 0)
         return true;
-    }
 
-    const int vertex = order[position];
-    for (int color = 0; color < colorLimit; ++color) {
-        if (!canUseColor(adjacency, colors, vertex, color)) {
-            continue;
-        }
+    // Stack entry: (position in order, next color index to try)
+    QVector<int> tryNext(n, 0);
+    int pos = 0;
 
-        colors[vertex] = color;
-        if (colorByBacktracking(adjacency, order, position + 1, colorLimit, colors)) {
+    while (pos >= 0) {
+        if (pos == n)
             return true;
+
+        const int vertex = order[pos];
+        bool placed = false;
+
+        for (int color = tryNext[pos]; color < colorLimit; ++color) {
+            if (!canUseColor(adjacency, colors, vertex, color)) {
+                continue;
+            }
+            colors[vertex] = color;
+            tryNext[pos] = color + 1;
+            ++pos;
+            if (pos < n)
+                tryNext[pos] = 0;
+            placed = true;
+            break;
         }
-        colors[vertex] = -1;
+
+        if (!placed) {
+            colors[vertex] = -1;
+            tryNext[pos] = 0;
+            --pos;
+        }
     }
 
     return false;
@@ -262,7 +281,7 @@ QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
 
     for (int colorLimit = 1; colorLimit <= vertexCount; ++colorLimit) {
         QVector<int> colors(vertexCount, -1);
-        if (colorByBacktracking(adjacency, order, 0, colorLimit, colors)) {
+        if (colorByBacktracking(adjacency, order, colorLimit, colors)) {
             return colors;
         }
     }
