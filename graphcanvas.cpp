@@ -191,11 +191,20 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
             const QPointF &a = vertices.at(edge.first);
             const QPointF &b = vertices.at(edge.second);
-            const QPointF mid = (a + b) / 2.0;
-            const qreal dist = std::hypot(b.x() - a.x(), b.y() - a.y());
+            const QPointF delta = b - a;
+            const qreal dist = std::hypot(delta.x(), delta.y());
             const QString label = QString::number(qRound(dist));
             const QFontMetrics fm(weightFont);
             const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
+            // Skip label if edge is too short to place it clear of both vertices
+            if (dist < vertexRadius * 2.0 + 8.0)
+                continue;
+
+            // Offset label perpendicularly 55px from the edge midpoint
+            QPointF mid = (a + b) / 2.0;
+            const QPointF perp(-delta.y() / dist, delta.x() / dist);
+            mid += perp * 55.0;
+
             const QRectF centeredRect = labelRect.translated(mid - labelRect.center());
             painter.setPen(Qt::NoPen);
             painter.setBrush(QColor(255, 255, 255, 210));
