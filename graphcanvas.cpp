@@ -183,6 +183,30 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         }
     }
 
+    // Подписи весов рёбер
+    if (m_showEdgeWeights) {
+        QFont weightFont = painter.font();
+        weightFont.setPointSize(8);
+        painter.setFont(weightFont);
+        for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
+            const QPointF &a = vertices.at(edge.first);
+            const QPointF &b = vertices.at(edge.second);
+            const QPointF mid = (a + b) / 2.0;
+            const qreal dist = std::hypot(b.x() - a.x(), b.y() - a.y());
+            const QString label = QString::number(qRound(dist));
+            const QFontMetrics fm(weightFont);
+            const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
+            const QRectF centeredRect = labelRect.translated(mid - labelRect.center());
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(255, 255, 255, 210));
+            painter.drawRoundedRect(centeredRect, 3, 3);
+            painter.setPen(QColor(80, 80, 80));
+            painter.drawText(centeredRect, Qt::AlignCenter, label);
+            painter.setPen(QPen(QColor(120, 120, 120), 2));
+            painter.setBrush(Qt::NoBrush);
+        }
+    }
+
     // Отрисовка подсветки
     for (const auto &hl : m_highlights) {
         if (hl.isEdge) {
@@ -355,5 +379,11 @@ void GraphCanvas::clearStartVertex()
 void GraphCanvas::setDirected(bool directed)
 {
     m_isDirected = directed;
+    update();
+}
+
+void GraphCanvas::setShowEdgeWeights(bool show)
+{
+    m_showEdgeWeights = show;
     update();
 }
