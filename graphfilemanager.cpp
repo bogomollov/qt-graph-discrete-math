@@ -8,6 +8,7 @@
 bool GraphFileManager::saveToFile(const QString &fileName,
                                   const QVector<QPointF> &vertices,
                                   const QVector<QPair<qsizetype, qsizetype>> &edges,
+                                  bool directed,
                                   QString *errorMessage)
 {
     QFile file(fileName);
@@ -40,6 +41,7 @@ bool GraphFileManager::saveToFile(const QString &fileName,
     // Создаем корневой объект
     QJsonObject rootObj;
     rootObj["version"] = "1.0";
+    rootObj["directed"] = directed;
     rootObj["vertices"] = verticesArray;
     rootObj["edges"] = edgesArray;
 
@@ -54,6 +56,7 @@ bool GraphFileManager::saveToFile(const QString &fileName,
 bool GraphFileManager::loadFromFile(const QString &fileName,
                                     QVector<QPointF> &vertices,
                                     QVector<QPair<qsizetype, qsizetype>> &edges,
+                                    bool *directed,
                                     QString *errorMessage)
 {
     QFile file(fileName);
@@ -96,6 +99,10 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
             *errorMessage = "В файле отсутствует информация о версии";
         }
         return false;
+    }
+
+    if (directed) {
+        *directed = rootObj["directed"].toBool(false);
     }
 
     // Загружаем вершины

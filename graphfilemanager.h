@@ -15,12 +15,14 @@ public:
     static bool saveToFile(const QString &fileName,
                            const QVector<QPointF> &vertices,
                            const QVector<QPair<qsizetype, qsizetype>> &edges,
+                           bool directed = false,
                            QString *errorMessage = nullptr);
 
     // Загрузка графа из JSON файла
     static bool loadFromFile(const QString &fileName,
                              QVector<QPointF> &vertices,
                              QVector<QPair<qsizetype, qsizetype>> &edges,
+                             bool *directed = nullptr,
                              QString *errorMessage = nullptr);
 };
 
