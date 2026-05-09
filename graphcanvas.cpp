@@ -13,6 +13,7 @@ namespace {
 constexpr qreal vertexRadius = 24.0;
 constexpr qreal vertexClickTolerance = 6.0;
 constexpr qreal arrowSize = 10.0;
+constexpr qreal minVertexDistance = 62.0;
 const QColor startVertexColor(255, 0, 0);
 
 void drawArrowHead(QPainter &painter, const QPointF &from, const QPointF &to)
@@ -69,7 +70,16 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
     const QPointF pos = event->pos();
 #endif
 
-    vertices[m_draggedVertexIndex] = pos;
+    QPointF clamped = pos;
+    for (qsizetype i = 0; i < vertices.size(); ++i) {
+        if (i == m_draggedVertexIndex)
+            continue;
+        const QPointF delta = clamped - vertices.at(i);
+        const qreal dist = std::hypot(delta.x(), delta.y());
+        if (dist < minVertexDistance && dist > 1e-6)
+            clamped = vertices.at(i) + delta / dist * minVertexDistance;
+    }
+    vertices[m_draggedVertexIndex] = clamped;
 
     update();
     emit graphChanged();
@@ -200,10 +210,10 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             if (dist < vertexRadius * 2.0 + 8.0)
                 continue;
 
-            // Offset label perpendicularly 55px from the edge midpoint
+            // Offset label perpendicularly from the edge midpoint
             QPointF mid = (a + b) / 2.0;
             const QPointF perp(-delta.y() / dist, delta.x() / dist);
-            mid += perp * 55.0;
+            mid += perp * 15.0;
 
             const QRectF centeredRect = labelRect.translated(mid - labelRect.center());
             painter.setPen(Qt::NoPen);
