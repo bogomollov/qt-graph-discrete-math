@@ -4,6 +4,15 @@
 #include <QVector>
 #include <QPair>
 #include <QPointF>
+#include <algorithm>
+#include <cmath>
+
+constexpr double kMinVertexDistance = 62.0;
+
+inline double edgeDisplayWeight(double euclideanDist)
+{
+    return std::max(1.0, std::round(euclideanDist) - kMinVertexDistance + 1.0);
+}
 
 class GraphData
 {

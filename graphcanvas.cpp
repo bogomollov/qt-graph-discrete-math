@@ -1,4 +1,5 @@
 #include "graphcanvas.h"
+#include "graphdata.h"
 
 #include <QMouseEvent>
 #include <QPainter>
@@ -14,7 +15,7 @@ namespace {
 constexpr qreal vertexRadius = 24.0;
 constexpr qreal vertexClickTolerance = 6.0;
 constexpr qreal arrowSize = 10.0;
-constexpr qreal minVertexDistance = 62.0;
+constexpr qreal minVertexDistance = kMinVertexDistance;
 const QColor startVertexColor(255, 0, 0);
 
 void drawArrowHead(QPainter &painter, const QPointF &from, const QPointF &to)
@@ -154,9 +155,12 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
             const auto from = selectedVertexIndex;
             const auto to = clickedVertexIndex;
             const bool exists = std::any_of(edges.cbegin(), edges.cend(),
-                [from, to](const QPair<qsizetype, qsizetype> &e) {
-                    return (e.first == from && e.second == to)
-                        || (e.first == to && e.second == from);
+                [from, to, this](const QPair<qsizetype, qsizetype> &e) {
+                    if (e.first == from && e.second == to)
+                        return true;
+                    if (!m_isDirected && e.first == to && e.second == from)
+                        return true;
+                    return false;
                 });
             if (!exists)
                 edges.append(qMakePair(from, to));
@@ -243,7 +247,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             const QPointF &b = vertices.at(edge.second);
             const QPointF delta = b - a;
             const qreal dist = std::hypot(delta.x(), delta.y());
-            const QString label = QString::number(qMax(1LL, qRound(dist) - qRound(minVertexDistance) + 1));
+            const QString label = QString::number(static_cast<long long>(edgeDisplayWeight(dist)));
             const QFontMetrics fm(weightFont);
             const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
             // Skip label if edge is too short to place it clear of both vertices

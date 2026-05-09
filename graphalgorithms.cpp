@@ -169,7 +169,7 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
         }
 
         const QPointF delta = graph.vertices().at(edge.first) - graph.vertices().at(edge.second);
-        weightedEdges.append({edge.first, edge.second, std::hypot(delta.x(), delta.y())});
+        weightedEdges.append({edge.first, edge.second, edgeDisplayWeight(std::hypot(delta.x(), delta.y()))});
     }
 
     std::sort(weightedEdges.begin(), weightedEdges.end(),
@@ -351,7 +351,7 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &
                 continue;
 
             const QPointF delta = graph.vertices().at(u) - graph.vertices().at(v);
-            const double w = std::hypot(delta.x(), delta.y());
+            const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
             if (dist[u] + w < dist[v]) {
                 dist[v] = dist[u] + w;
                 prev[v] = u;
