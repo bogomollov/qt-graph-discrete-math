@@ -179,6 +179,7 @@ void MainWindow::buildSpanningTree(bool minimum)
     }
 
     graphCanvas->setData(vertices, treeEdges);
+    graphCanvas->setShowEdgeWeights(true);
 
     QStringList edges;
     for (const auto &edge : treeEdges) {
@@ -289,6 +290,7 @@ void MainWindow::on_actionNewGraph_triggered()
     }
 
     graphCanvas->clear();
+    graphCanvas->setShowEdgeWeights(false);
     m_lastSavePath.clear();
     ui->logOutput->appendPlainText("Создан новый граф");
 }
@@ -369,6 +371,7 @@ void MainWindow::on_actionLoadGraph_triggered()
                 .arg(fileName));
 
         graphCanvas->setData(vertices, edges);
+        graphCanvas->setShowEdgeWeights(false);
         graphCanvas->setDirected(directed);
         graphData->setDirected(directed);
         ui->directedToggleButton->setChecked(directed);
