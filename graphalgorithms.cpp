@@ -108,34 +108,35 @@ QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVer
         return steps;
     }
 
-    QVector<bool> visited(graph.vertexCount(), false);
-    QQueue<int> queue;
-
     steps.append({AlgorithmStep::Start, startVertex, -1,
                   QString("=== BFS из вершины %1 ===").arg(startVertex + 1)});
 
-    visited[startVertex] = true;
-    queue.enqueue(startVertex);
-    steps.append({AlgorithmStep::VisitVertex, startVertex, -1,
-                  QString("Посетили вершину %1").arg(startVertex + 1)});
+    QVector<bool> visited(graph.vertexCount(), false);
+    QQueue<int> queue;
 
-    while (!queue.isEmpty()) {
-        int current = queue.dequeue();
+    // Visit all components: start from startVertex, then restart from any unvisited vertex
+    for (int seed = 0; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed == 0) ? startVertex : seed;
+        if (visited[origin])
+            continue;
 
-        QVector<int> neighbors;
-        // конвертируем qsizetype -> int
-        for (auto n : graph.getNeighbors(current))
-            neighbors.append(static_cast<int>(n));
+        visited[origin] = true;
+        queue.enqueue(origin);
+        steps.append({AlgorithmStep::VisitVertex, origin, -1,
+                      QString("Посетили вершину %1").arg(origin + 1)});
 
-        for (int neighbor : neighbors) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = true;
-                queue.enqueue(neighbor);
-
-                steps.append({AlgorithmStep::DiscoverEdge, current, neighbor,
-                              QString("Ребро %1-%2").arg(current + 1).arg(neighbor + 1)});
-                steps.append({AlgorithmStep::VisitVertex, neighbor, -1,
-                              QString("Посетили вершину %1").arg(neighbor + 1)});
+        while (!queue.isEmpty()) {
+            int current = queue.dequeue();
+            for (auto n : graph.getNeighbors(current)) {
+                const int neighbor = static_cast<int>(n);
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.enqueue(neighbor);
+                    steps.append({AlgorithmStep::DiscoverEdge, current, neighbor,
+                                  QString("Ребро %1-%2").arg(current + 1).arg(neighbor + 1)});
+                    steps.append({AlgorithmStep::VisitVertex, neighbor, -1,
+                                  QString("Посетили вершину %1").arg(neighbor + 1)});
+                }
             }
         }
     }
@@ -278,25 +279,32 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
         return steps;
     }
 
-    QVector<bool> visited(graph.vertexCount(), false);
-    QVector<int> stack;
-
     steps.append({AlgorithmStep::Start, startVertex, -1,
                   QString("=== DFS из вершины %1 ===").arg(startVertex + 1)});
 
-    stack.push_back(startVertex);
+    QVector<bool> visited(graph.vertexCount(), false);
+    QVector<int> stack;
 
-    while (!stack.isEmpty()) {
-        int vertex = stack.last();
-        stack.removeLast();
+    // Visit all components: start from startVertex, then restart from any unvisited vertex
+    for (int seed = 0; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed == 0) ? startVertex : seed;
+        if (visited[origin])
+            continue;
 
-        if (!visited[vertex]) {
+        stack.push_back(origin);
+
+        while (!stack.isEmpty()) {
+            int vertex = stack.last();
+            stack.removeLast();
+
+            if (visited[vertex])
+                continue;
+
             visited[vertex] = true;
             steps.append({AlgorithmStep::VisitVertex, vertex, -1,
                           QString("Посетили вершину %1").arg(vertex + 1)});
 
             QVector<qsizetype> neighbors = graph.getNeighbors(vertex);
-
             for (int i = neighbors.size() - 1; i >= 0; --i) {
                 int neighbor = static_cast<int>(neighbors[i]);
                 if (!visited[neighbor]) {
