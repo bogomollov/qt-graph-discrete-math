@@ -316,7 +316,7 @@ void MainWindow::on_actionSaveGraph_triggered()
 
     // Сохраняем через менеджер
     QString errorMsg;
-    if (GraphFileManager::saveToFile(fileName, vertices, edges, &errorMsg)) {
+    if (GraphFileManager::saveToFile(fileName, vertices, edges, graphCanvas->isDirected(), &errorMsg)) {
         ui->logOutput->appendPlainText(
             QString("Граф сохранён: %1 вершин, %2 рёбер\nФайл: %3")
                 .arg(vertices.size())
@@ -355,11 +355,10 @@ void MainWindow::on_actionLoadGraph_triggered()
     // Загружаем данные
     QVector<QPointF> vertices;
     QVector<QPair<qsizetype, qsizetype>> edges;
+    bool directed = false;
 
     QString errorMsg;
-    if (GraphFileManager::loadFromFile(fileName, vertices, edges, &errorMsg)) {
-        // Здесь нужно обновить холст
-        // Пока просто выводим сообщение
+    if (GraphFileManager::loadFromFile(fileName, vertices, edges, &directed, &errorMsg)) {
         ui->logOutput->appendPlainText(
             QString("Граф загружен: %1 вершин, %2 рёбер\nФайл: %3")
                 .arg(vertices.size())
@@ -367,6 +366,9 @@ void MainWindow::on_actionLoadGraph_triggered()
                 .arg(fileName));
 
         graphCanvas->setData(vertices, edges);
+        graphCanvas->setDirected(directed);
+        graphData->setDirected(directed);
+        ui->directedToggleButton->setChecked(directed);
         m_lastSavePath = fileName;
         ui->logOutput->appendPlainText("Граф успешно загружен на холст");
     } else {
@@ -394,6 +396,15 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
 void MainWindow::on_actionAdjacencyList_triggered()
 {
     ui->logOutput->appendPlainText("Список смежности пока не реализован");
+}
+
+void MainWindow::on_directedToggleButton_toggled(bool checked)
+{
+    graphCanvas->setDirected(checked);
+    graphData->setDirected(checked);
+    ui->directedToggleButton->setText(checked ? "Ориентированный" : "Неориентированный");
+    ui->logOutput->appendPlainText(checked ? "Режим: ориентированный граф"
+                                           : "Режим: неориентированный граф");
 }
 
 // --- Меню Справка ---

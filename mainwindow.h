@@ -43,6 +43,7 @@ private slots:
     void on_actionAdjacencyMatrix_triggered();
     void on_actionAdjacencyList_triggered();
     void on_actionAbout_triggered();
+    void on_directedToggleButton_toggled(bool checked);
 
 private:
     Ui::MainWindow *ui;
