@@ -70,8 +70,16 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
     const QPointF pos = event->pos();
 #endif
 
-    vertices[m_draggedVertexIndex] = pos;
-    separateVertices();
+    QPointF clamped = pos;
+    for (qsizetype i = 0; i < vertices.size(); ++i) {
+        if (i == m_draggedVertexIndex)
+            continue;
+        const QPointF delta = clamped - vertices.at(i);
+        const qreal dist = std::hypot(delta.x(), delta.y());
+        if (dist < minVertexDistance && dist > 1e-6)
+            clamped = vertices.at(i) + delta / dist * minVertexDistance;
+    }
+    vertices[m_draggedVertexIndex] = clamped;
 
     update();
     emit graphChanged();
@@ -162,20 +170,27 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     update();
 }
 
-void GraphCanvas::separateVertices()
+void GraphCanvas::separateVertices(qsizetype pinned)
 {
-    // Iterative relaxation: push apart any pair closer than minVertexDistance.
-    // A fixed number of passes handles chains of overlapping vertices.
     for (int pass = 0; pass < 10; ++pass) {
         bool anyMoved = false;
         for (qsizetype i = 0; i < vertices.size(); ++i) {
             for (qsizetype j = i + 1; j < vertices.size(); ++j) {
+                // During a drag, only resolve pairs that involve the pinned vertex
+                if (pinned >= 0 && i != pinned && j != pinned)
+                    continue;
                 const QPointF delta = vertices[i] - vertices[j];
                 const qreal dist = std::hypot(delta.x(), delta.y());
                 if (dist < minVertexDistance && dist > 1e-6) {
-                    const QPointF push = delta / dist * (minVertexDistance - dist) / 2.0;
-                    vertices[i] += push;
-                    vertices[j] -= push;
+                    const QPointF push = delta / dist * (minVertexDistance - dist);
+                    if (i == pinned) {
+                        vertices[j] -= push;
+                    } else if (j == pinned) {
+                        vertices[i] += push;
+                    } else {
+                        vertices[i] += push / 2.0;
+                        vertices[j] -= push / 2.0;
+                    }
                     anyMoved = true;
                 }
             }
