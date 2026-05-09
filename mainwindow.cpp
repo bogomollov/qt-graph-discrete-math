@@ -205,6 +205,7 @@ void MainWindow::on_greedyColoringButton_clicked()
         return;
     }
 
+    graphCanvas->setShowEdgeWeights(true);
     applyColoring("Жадная раскраска", algorithms->greedyColoring(*graphData));
 }
 
@@ -221,12 +222,14 @@ void MainWindow::on_backtrackingColoringButton_clicked()
         return;
     }
 
+    graphCanvas->setShowEdgeWeights(false);
     applyColoring("Раскраска с возвратом", algorithms->backtrackingColoring(*graphData));
 }
 
 void MainWindow::on_clearColoringButton_clicked()
 {
     graphCanvas->clearVertexColors();
+    graphCanvas->setShowEdgeWeights(false);
     ui->logOutput->appendPlainText("Раскраска очищена.");
 }
 
