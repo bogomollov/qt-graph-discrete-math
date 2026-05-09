@@ -19,6 +19,7 @@ public:
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
     qsizetype getStartVertex() const { return startVertexIndex; }
     bool isDirected() const { return m_isDirected; }
+    bool showEdgeWeights() const { return m_showEdgeWeights; }
 
     // Сеттеры для установки данных
     void setData(const QVector<QPointF> &newVertices,
@@ -39,6 +40,7 @@ public:
     void clearStartVertex();
 
     void setDirected(bool directed);
+    void setShowEdgeWeights(bool show);
 
 signals:
     void graphChanged();  // сигнал: граф изменился
@@ -60,6 +62,7 @@ private:
     bool m_isDragging = false;
     qsizetype m_draggedVertexIndex = -1;
     bool m_isDirected = false;
+    bool m_showEdgeWeights = false;
 
     struct Highlight {
         bool isEdge = false;
