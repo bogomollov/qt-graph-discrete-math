@@ -245,9 +245,6 @@ void MainWindow::buildSpanningTree(bool minimum)
         return;
     }
 
-    graphCanvas->setData(vertices, treeEdges);
-    graphCanvas->setShowEdgeWeights(true);
-
     spanningTreeCanvas->setData(vertices, treeEdges);
     spanningTreeCanvas->setShowEdgeWeights(true);
 
