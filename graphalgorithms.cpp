@@ -2,7 +2,9 @@
 #include "graphdata.h"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <QQueue>
+#include <QSet>
 #include <QVector>
 
 namespace {
@@ -71,27 +73,46 @@ bool canUseColor(const QVector<QVector<int>> &adjacency,
     return true;
 }
 
+// Iterative backtracking coloring to avoid stack overflow on large graphs.
+// Each stack frame stores (position, nextColorToTry).
 bool colorByBacktracking(const QVector<QVector<int>> &adjacency,
                          const QVector<int> &order,
-                         int position,
                          int colorLimit,
                          QVector<int> &colors)
 {
-    if (position == order.size()) {
+    const int n = order.size();
+    if (n == 0)
         return true;
-    }
 
-    const int vertex = order[position];
-    for (int color = 0; color < colorLimit; ++color) {
-        if (!canUseColor(adjacency, colors, vertex, color)) {
-            continue;
-        }
+    // Stack entry: (position in order, next color index to try)
+    QVector<int> tryNext(n, 0);
+    int pos = 0;
 
-        colors[vertex] = color;
-        if (colorByBacktracking(adjacency, order, position + 1, colorLimit, colors)) {
+    while (pos >= 0) {
+        if (pos == n)
             return true;
+
+        const int vertex = order[pos];
+        bool placed = false;
+
+        for (int color = tryNext[pos]; color < colorLimit; ++color) {
+            if (!canUseColor(adjacency, colors, vertex, color)) {
+                continue;
+            }
+            colors[vertex] = color;
+            tryNext[pos] = color + 1;
+            ++pos;
+            if (pos < n)
+                tryNext[pos] = 0;
+            placed = true;
+            break;
         }
-        colors[vertex] = -1;
+
+        if (!placed) {
+            colors[vertex] = -1;
+            tryNext[pos] = 0;
+            --pos;
+        }
     }
 
     return false;
@@ -107,34 +128,35 @@ QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVer
         return steps;
     }
 
-    QVector<bool> visited(graph.vertexCount(), false);
-    QQueue<int> queue;
-
     steps.append({AlgorithmStep::Start, startVertex, -1,
                   QString("=== BFS из вершины %1 ===").arg(startVertex + 1)});
 
-    visited[startVertex] = true;
-    queue.enqueue(startVertex);
-    steps.append({AlgorithmStep::VisitVertex, startVertex, -1,
-                  QString("Посетили вершину %1").arg(startVertex + 1)});
+    QVector<bool> visited(graph.vertexCount(), false);
+    QQueue<int> queue;
 
-    while (!queue.isEmpty()) {
-        int current = queue.dequeue();
+    // Visit all components: start from startVertex, then restart from any unvisited vertex
+    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed < 0) ? startVertex : seed;
+        if (visited[origin])
+            continue;
 
-        QVector<int> neighbors;
-        // конвертируем qsizetype -> int
-        for (auto n : graph.getNeighbors(current))
-            neighbors.append(static_cast<int>(n));
+        visited[origin] = true;
+        queue.enqueue(origin);
+        steps.append({AlgorithmStep::VisitVertex, origin, -1,
+                      QString("Посетили вершину %1").arg(origin + 1)});
 
-        for (int neighbor : neighbors) {
-            if (!visited[neighbor]) {
-                visited[neighbor] = true;
-                queue.enqueue(neighbor);
-
-                steps.append({AlgorithmStep::DiscoverEdge, current, neighbor,
-                              QString("Ребро %1-%2").arg(current + 1).arg(neighbor + 1)});
-                steps.append({AlgorithmStep::VisitVertex, neighbor, -1,
-                              QString("Посетили вершину %1").arg(neighbor + 1)});
+        while (!queue.isEmpty()) {
+            int current = queue.dequeue();
+            for (auto n : graph.getNeighbors(current)) {
+                const int neighbor = static_cast<int>(n);
+                if (!visited[neighbor]) {
+                    visited[neighbor] = true;
+                    queue.enqueue(neighbor);
+                    steps.append({AlgorithmStep::DiscoverEdge, current, neighbor,
+                                  QString("Ребро %1-%2").arg(current + 1).arg(neighbor + 1)});
+                    steps.append({AlgorithmStep::VisitVertex, neighbor, -1,
+                                  QString("Посетили вершину %1").arg(neighbor + 1)});
+                }
             }
         }
     }
@@ -168,7 +190,7 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
         }
 
         const QPointF delta = graph.vertices().at(edge.first) - graph.vertices().at(edge.second);
-        weightedEdges.append({edge.first, edge.second, std::hypot(delta.x(), delta.y())});
+        weightedEdges.append({edge.first, edge.second, edgeDisplayWeight(std::hypot(delta.x(), delta.y()))});
     }
 
     std::sort(weightedEdges.begin(), weightedEdges.end(),
@@ -211,7 +233,7 @@ QVector<int> GraphAlgorithms::greedyColoring(const GraphData &graph)
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
         QVector<bool> usedColors(vertexCount, false);
 
-        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+        for (qsizetype neighborIndex : graph.getNeighborsUndirected(vertex)) {
             const int neighbor = static_cast<int>(neighborIndex);
             if (neighbor >= 0 && neighbor < vertexCount && colors[neighbor] >= 0) {
                 usedColors[colors[neighbor]] = true;
@@ -234,11 +256,13 @@ QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
     const int vertexCount = graph.vertexCount();
     QVector<QVector<int>> adjacency(vertexCount);
 
+    QVector<QSet<int>> seen(vertexCount);
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
-        for (qsizetype neighborIndex : graph.getNeighbors(vertex)) {
+        for (qsizetype neighborIndex : graph.getNeighborsUndirected(vertex)) {
             const int neighbor = static_cast<int>(neighborIndex);
             if (neighbor >= 0 && neighbor < vertexCount && neighbor != vertex
-                && !adjacency[vertex].contains(neighbor)) {
+                && !seen[vertex].contains(neighbor)) {
+                seen[vertex].insert(neighbor);
                 adjacency[vertex].append(neighbor);
             }
         }
@@ -260,7 +284,7 @@ QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
 
     for (int colorLimit = 1; colorLimit <= vertexCount; ++colorLimit) {
         QVector<int> colors(vertexCount, -1);
-        if (colorByBacktracking(adjacency, order, 0, colorLimit, colors)) {
+        if (colorByBacktracking(adjacency, order, colorLimit, colors)) {
             return colors;
         }
     }
@@ -277,25 +301,32 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
         return steps;
     }
 
-    QVector<bool> visited(graph.vertexCount(), false);
-    QVector<int> stack;
-
     steps.append({AlgorithmStep::Start, startVertex, -1,
                   QString("=== DFS из вершины %1 ===").arg(startVertex + 1)});
 
-    stack.push_back(startVertex);
+    QVector<bool> visited(graph.vertexCount(), false);
+    QVector<int> stack;
 
-    while (!stack.isEmpty()) {
-        int vertex = stack.last();
-        stack.removeLast();
+    // Visit all components: start from startVertex, then restart from any unvisited vertex
+    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed < 0) ? startVertex : seed;
+        if (visited[origin])
+            continue;
 
-        if (!visited[vertex]) {
+        stack.push_back(origin);
+
+        while (!stack.isEmpty()) {
+            int vertex = stack.last();
+            stack.removeLast();
+
+            if (visited[vertex])
+                continue;
+
             visited[vertex] = true;
             steps.append({AlgorithmStep::VisitVertex, vertex, -1,
                           QString("Посетили вершину %1").arg(vertex + 1)});
 
             QVector<qsizetype> neighbors = graph.getNeighbors(vertex);
-
             for (int i = neighbors.size() - 1; i >= 0; --i) {
                 int neighbor = static_cast<int>(neighbors[i]);
                 if (!visited[neighbor]) {
@@ -309,4 +340,69 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
 
     steps.append({AlgorithmStep::Finish, -1, -1, "=== DFS завершён ==="});
     return steps;
+}
+
+QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &graph,
+                                                                int startVertex,
+                                                                int endVertex,
+                                                                double *totalWeight)
+{
+    if (totalWeight)
+        *totalWeight = 0.0;
+
+    const int n = graph.vertexCount();
+    if (n == 0 || startVertex < 0 || startVertex >= n || endVertex < 0 || endVertex >= n)
+        return {};
+
+    const double inf = std::numeric_limits<double>::infinity();
+    QVector<double> dist(n, inf);
+    QVector<int> prev(n, -1);
+    QVector<bool> visited(n, false);
+    dist[startVertex] = 0.0;
+
+    // Build adjacency list once to avoid O(|E|) edge scan per iteration
+    QVector<QVector<QPair<int, double>>> adj(n);
+    for (const auto &edge : graph.edges()) {
+        const int a = static_cast<int>(edge.first);
+        const int b = static_cast<int>(edge.second);
+        const QPointF delta = graph.vertices().at(a) - graph.vertices().at(b);
+        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
+        adj[a].append(qMakePair(b, w));
+        if (!graph.isDirected())
+            adj[b].append(qMakePair(a, w));
+    }
+
+    for (int iter = 0; iter < n; ++iter) {
+        // Pick unvisited vertex with smallest distance
+        int u = -1;
+        for (int i = 0; i < n; ++i) {
+            if (!visited[i] && (u < 0 || dist[i] < dist[u]))
+                u = i;
+        }
+        if (u < 0 || dist[u] == inf)
+            break;
+        visited[u] = true;
+
+        for (const auto &neighbor : adj[u]) {
+            const int v = neighbor.first;
+            const double w = neighbor.second;
+            if (!visited[v] && dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                prev[v] = u;
+            }
+        }
+    }
+
+    if (dist[endVertex] == inf)
+        return {};
+
+    // Reconstruct path edges
+    QVector<QPair<qsizetype, qsizetype>> path;
+    for (int v = endVertex; prev[v] >= 0; v = prev[v])
+        path.prepend(qMakePair(static_cast<qsizetype>(prev[v]), static_cast<qsizetype>(v)));
+
+    if (totalWeight)
+        *totalWeight = dist[endVertex];
+
+    return path;
 }

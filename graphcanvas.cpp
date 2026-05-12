@@ -1,4 +1,5 @@
 #include "graphcanvas.h"
+#include "graphdata.h"
 
 #include <QMouseEvent>
 #include <QPainter>
@@ -6,12 +7,38 @@
 #include <QColor>
 #include <QKeyEvent>
 
+#include <algorithm>
 #include <utility>
+#include <cmath>
 
 namespace {
-constexpr qreal vertexRadius = 24.0; // Радиус вершины
+constexpr qreal vertexRadius = 24.0;
 constexpr qreal vertexClickTolerance = 6.0;
-const QColor startVertexColor(255, 0, 0); // Начальная вершина
+constexpr qreal arrowSize = 10.0;
+constexpr qreal minVertexDistance = kMinVertexDistance;
+const QColor startVertexColor(255, 0, 0);
+
+void drawArrowHead(QPainter &painter, const QPointF &from, const QPointF &to)
+{
+    const QPointF delta = to - from;
+    const qreal length = std::hypot(delta.x(), delta.y());
+    if (length < 1e-6)
+        return;
+
+    // Unit vector along the edge
+    const QPointF unit = delta / length;
+    // Tip of arrowhead sits on the circle boundary of the target vertex
+    const QPointF tip = to - unit * vertexRadius;
+
+    // Two base points of the arrowhead triangle
+    const QPointF perp(-unit.y(), unit.x());
+    const QPointF base = tip - unit * arrowSize;
+    const QPointF p1 = base + perp * (arrowSize * 0.5);
+    const QPointF p2 = base - perp * (arrowSize * 0.5);
+
+    const QPolygonF arrow = {tip, p1, p2};
+    painter.drawPolygon(arrow);
+}
 }
 
 GraphCanvas::GraphCanvas(QWidget *parent)
@@ -36,7 +63,7 @@ void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
 
 void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 {
-    if (!m_isDragging || m_draggedVertexIndex < 0)
+    if (!m_isDragging)
         return;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -45,7 +72,29 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
     const QPointF pos = event->pos();
 #endif
 
-    vertices[m_draggedVertexIndex] = pos;
+    if (m_allSelected) {
+        const QPointF delta = pos - m_lastDragPos;
+        for (QPointF &v : vertices)
+            v += delta;
+        m_lastDragPos = pos;
+        update();
+        emit graphChanged();
+        return;
+    }
+
+    if (m_draggedVertexIndex < 0)
+        return;
+
+    QPointF clamped = pos;
+    for (qsizetype i = 0; i < vertices.size(); ++i) {
+        if (i == m_draggedVertexIndex)
+            continue;
+        const QPointF delta = clamped - vertices.at(i);
+        const qreal dist = std::hypot(delta.x(), delta.y());
+        if (dist < minVertexDistance && dist > 1e-6)
+            clamped = vertices.at(i) + delta / dist * minVertexDistance;
+    }
+    vertices[m_draggedVertexIndex] = clamped;
 
     update();
     emit graphChanged();
@@ -53,6 +102,26 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 
 void GraphCanvas::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_A && event->modifiers() == Qt::ControlModifier) {
+        m_allSelected = !vertices.isEmpty() && !m_allSelected;
+        selectedVertexIndex = -1;
+        update();
+        return;
+    }
+
+    if (event->key() == Qt::Key_Delete && m_allSelected) {
+        vertices.clear();
+        edges.clear();
+        selectedVertexIndex = -1;
+        startVertexIndex = -1;
+        m_allSelected = false;
+        m_highlights.clear();
+        m_vertexColors.clear();
+        update();
+        emit graphChanged();
+        return;
+    }
+
     if (event->key() == Qt::Key_Delete && selectedVertexIndex >= 0) {
         const qsizetype removedIndex = selectedVertexIndex;
         vertices.removeAt(removedIndex);
@@ -96,6 +165,12 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     const QPointF clickPosition = event->pos();
 #endif
 
+    if (m_allSelected) {
+        m_isDragging = true;
+        m_lastDragPos = clickPosition;
+        return;
+    }
+
     qsizetype clickedVertexIndex = -1;
     qreal closestDistanceSquared = 0.0;
     const qreal hitRadius = vertexRadius + vertexClickTolerance;
@@ -116,7 +191,18 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         m_draggedVertexIndex = clickedVertexIndex;
 
         if (selectedVertexIndex >= 0 && selectedVertexIndex != clickedVertexIndex) {
-            edges.append(qMakePair(selectedVertexIndex, clickedVertexIndex));
+            const auto from = selectedVertexIndex;
+            const auto to = clickedVertexIndex;
+            const bool exists = std::any_of(edges.cbegin(), edges.cend(),
+                [from, to, this](const QPair<qsizetype, qsizetype> &e) {
+                    if (e.first == from && e.second == to)
+                        return true;
+                    if (!m_isDirected && e.first == to && e.second == from)
+                        return true;
+                    return false;
+                });
+            if (!exists)
+                edges.append(qMakePair(from, to));
             selectedVertexIndex = -1;
             m_vertexColors.clear();
             emit graphChanged();
@@ -129,10 +215,41 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
     }
 
     vertices.append(clickPosition);
+    separateVertices();
     selectedVertexIndex = -1;
     m_vertexColors.clear();
     emit graphChanged();
     update();
+}
+
+void GraphCanvas::separateVertices(qsizetype pinned)
+{
+    for (int pass = 0; pass < 10; ++pass) {
+        bool anyMoved = false;
+        for (qsizetype i = 0; i < vertices.size(); ++i) {
+            for (qsizetype j = i + 1; j < vertices.size(); ++j) {
+                // During a drag, only resolve pairs that involve the pinned vertex
+                if (pinned >= 0 && i != pinned && j != pinned)
+                    continue;
+                const QPointF delta = vertices[i] - vertices[j];
+                const qreal dist = std::hypot(delta.x(), delta.y());
+                if (dist < minVertexDistance && dist > 1e-6) {
+                    const QPointF push = delta / dist * (minVertexDistance - dist);
+                    if (i == pinned) {
+                        vertices[j] -= push;
+                    } else if (j == pinned) {
+                        vertices[i] += push;
+                    } else {
+                        vertices[i] += push / 2.0;
+                        vertices[j] -= push / 2.0;
+                    }
+                    anyMoved = true;
+                }
+            }
+        }
+        if (!anyMoved)
+            break;
+    }
 }
 
 void GraphCanvas::paintEvent(QPaintEvent *event)
@@ -150,6 +267,13 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(QColor(120, 120, 120), 2));
     for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
         painter.drawLine(vertices.at(edge.first), vertices.at(edge.second));
+        if (m_isDirected) {
+            painter.setBrush(QColor(120, 120, 120));
+            painter.setPen(Qt::NoPen);
+            drawArrowHead(painter, vertices.at(edge.first), vertices.at(edge.second));
+            painter.setPen(QPen(QColor(120, 120, 120), 2));
+            painter.setBrush(Qt::NoBrush);
+        }
     }
 
     // Отрисовка подсветки
@@ -158,6 +282,13 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             QPen pen(hl.color, 3);
             painter.setPen(pen);
             painter.drawLine(vertices.at(hl.v1), vertices.at(hl.v2));
+            if (m_isDirected) {
+                painter.setBrush(hl.color);
+                painter.setPen(Qt::NoPen);
+                drawArrowHead(painter, vertices.at(hl.v1), vertices.at(hl.v2));
+                painter.setPen(pen);
+                painter.setBrush(Qt::NoBrush);
+            }
         } else {
             QPen pen(hl.color, 3);
             painter.setPen(pen);
@@ -182,7 +313,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         QColor outlineColor;
         if (index == startVertexIndex) {
             outlineColor = startVertexColor;  // Фиолетовый для стартовой
-        } else if (index == selectedVertexIndex) {
+        } else if (m_allSelected || index == selectedVertexIndex) {
             outlineColor = QColor(214, 130, 0);  // Оранжевый для выбранной
         } else {
             outlineColor = QColor(255, 174, 24); // Обычный цвет
@@ -198,6 +329,36 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         painter.setPen(QColor(34, 34, 34));
         painter.setFont(vertexLabelFont);
         painter.drawText(vertexRect, Qt::AlignCenter, QString::number(index + 1));
+    }
+
+    // Подписи весов рёбер (поверх вершин)
+    if (m_showEdgeWeights) {
+        QFont weightFont = painter.font();
+        weightFont.setPointSize(8);
+        painter.setFont(weightFont);
+        for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
+            const QPointF &a = vertices.at(edge.first);
+            const QPointF &b = vertices.at(edge.second);
+            const QPointF delta = b - a;
+            const qreal dist = std::hypot(delta.x(), delta.y());
+            const QString label = QString::number(static_cast<long long>(edgeDisplayWeight(dist)));
+            const QFontMetrics fm(weightFont);
+            const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
+            // Skip label if edge is too short to place it clear of both vertices
+            if (dist < vertexRadius * 2.0 + 8.0)
+                continue;
+
+            const QPointF mid = (a + b) / 2.0;
+
+            const QRectF centeredRect = labelRect.translated(mid - labelRect.center());
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QColor(255, 255, 255, 210));
+            painter.drawRoundedRect(centeredRect, 3, 3);
+            painter.setPen(QColor(80, 80, 80));
+            painter.drawText(centeredRect, Qt::AlignCenter, label);
+            painter.setPen(QPen(QColor(120, 120, 120), 2));
+            painter.setBrush(Qt::NoBrush);
+        }
     }
 }
 
@@ -242,8 +403,10 @@ void GraphCanvas::setData(const QVector<QPointF> &newVertices,
     edges = newEdges;
     selectedVertexIndex = -1;
     startVertexIndex = -1;
+    m_allSelected = false;
     m_highlights.clear();
     m_vertexColors.clear();
+    separateVertices();
     update();
     emit graphChanged();
 }
@@ -254,6 +417,7 @@ void GraphCanvas::clear()
     edges.clear();
     selectedVertexIndex = -1;
     startVertexIndex = -1;
+    m_allSelected = false;
     m_highlights.clear();
     m_vertexColors.clear();
     update();
@@ -311,5 +475,17 @@ void GraphCanvas::setStartVertex(qsizetype index)
 void GraphCanvas::clearStartVertex()
 {
     startVertexIndex = -1;
+    update();
+}
+
+void GraphCanvas::setDirected(bool directed)
+{
+    m_isDirected = directed;
+    update();
+}
+
+void GraphCanvas::setShowEdgeWeights(bool show)
+{
+    m_showEdgeWeights = show;
     update();
 }

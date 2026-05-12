@@ -2,16 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <qplaintextedit.h>
 #include <QVector>
 #include <QString>
+#include <QWidget>
 
 class GraphCanvas;
 class GraphData;
 class GraphAlgorithms;
 class GraphAnimator;
-
-class GraphCanvas;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -43,6 +41,8 @@ private slots:
     void on_actionAdjacencyMatrix_triggered();
     void on_actionAdjacencyList_triggered();
     void on_actionAbout_triggered();
+    void on_directedToggleButton_toggled(bool checked);
+    void on_dijkstraButton_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -50,6 +50,10 @@ private:
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
+    QWidget *spanningTreeWindow;
+    GraphCanvas *spanningTreeCanvas;
+    QWidget *adjacencyMatrixWindow;
+    QWidget *adjacencyListWindow;
     void buildSpanningTree(bool minimum);
     void applyColoring(const QString &title, const QVector<int> &colorIndexes);
 

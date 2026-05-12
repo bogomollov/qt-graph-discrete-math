@@ -1,3 +1,11 @@
+/* ===== General Widget Background ===== */
+QWidget {
+    background-color: #ECE9D8;
+    font-family: "Tahoma";
+    font-size: 11px;
+    color: black;
+}
+
 /* ===== MainWindow ===== */
 QMainWindow {
     background-color: #ECE9D8;
@@ -121,6 +129,26 @@ QStatusBar::item {
 
 /* ===== Label ===== */
 QLabel {
+    font-family: "Tahoma";
+    font-size: 11px;
+    color: black;
+}
+
+/* ===== TableWidget ===== */
+QTableWidget {
+    background-color: white;
+    border: 2px solid #7F9DB9;
+    gridline-color: #ACA899;
+    font-family: "Tahoma";
+    font-size: 11px;
+    color: black;
+}
+
+QHeaderView::section {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #F3F0E7, stop:1 #D8D0B8);
+    border: 1px solid #ACA899;
+    padding: 3px 6px;
     font-family: "Tahoma";
     font-size: 11px;
     color: black;

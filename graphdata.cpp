@@ -29,6 +29,21 @@ QVector<qsizetype> GraphData::getNeighbors(qsizetype vertexIndex) const
     for (const auto &edge : m_edges) {
         if (edge.first == vertexIndex) {
             neighbors.append(edge.second);
+        } else if (!m_isDirected && edge.second == vertexIndex) {
+            neighbors.append(edge.first);
+        }
+    }
+
+    return neighbors;
+}
+
+QVector<qsizetype> GraphData::getNeighborsUndirected(qsizetype vertexIndex) const
+{
+    QVector<qsizetype> neighbors;
+
+    for (const auto &edge : m_edges) {
+        if (edge.first == vertexIndex) {
+            neighbors.append(edge.second);
         } else if (edge.second == vertexIndex) {
             neighbors.append(edge.first);
         }

@@ -8,6 +8,7 @@
 bool GraphFileManager::saveToFile(const QString &fileName,
                                   const QVector<QPointF> &vertices,
                                   const QVector<QPair<qsizetype, qsizetype>> &edges,
+                                  bool directed,
                                   QString *errorMessage)
 {
     QFile file(fileName);
@@ -40,6 +41,7 @@ bool GraphFileManager::saveToFile(const QString &fileName,
     // Создаем корневой объект
     QJsonObject rootObj;
     rootObj["version"] = "1.0";
+    rootObj["directed"] = directed;
     rootObj["vertices"] = verticesArray;
     rootObj["edges"] = edgesArray;
 
@@ -54,6 +56,7 @@ bool GraphFileManager::saveToFile(const QString &fileName,
 bool GraphFileManager::loadFromFile(const QString &fileName,
                                     QVector<QPointF> &vertices,
                                     QVector<QPair<qsizetype, qsizetype>> &edges,
+                                    bool *directed,
                                     QString *errorMessage)
 {
     QFile file(fileName);
@@ -98,6 +101,10 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
         return false;
     }
 
+    if (directed) {
+        *directed = rootObj["directed"].toBool(false);
+    }
+
     // Загружаем вершины
     QJsonArray verticesArray = rootObj["vertices"].toArray();
     vertices.clear();
@@ -133,19 +140,19 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
             return false;
         }
 
-        qsizetype from = static_cast<qsizetype>(edgeObj["from"].toInt());
-        qsizetype to = static_cast<qsizetype>(edgeObj["to"].toInt());
+        const int fromInt = edgeObj["from"].toInt(-1);
+        const int toInt = edgeObj["to"].toInt(-1);
 
         // Проверяем валидность индексов
-        if (from < 0 || from >= vertices.size() || to < 0 || to >= vertices.size()) {
+        if (fromInt < 0 || fromInt >= vertices.size() || toInt < 0 || toInt >= vertices.size()) {
             if (errorMessage) {
                 *errorMessage = QString("Некорректное ребро: вершины %1-%2 не существуют")
-                                    .arg(from + 1).arg(to + 1);
+                                    .arg(fromInt + 1).arg(toInt + 1);
             }
             return false;
         }
 
-        edges.append(qMakePair(from, to));
+        edges.append(qMakePair(static_cast<qsizetype>(fromInt), static_cast<qsizetype>(toInt)));
     }
 
     return true;
