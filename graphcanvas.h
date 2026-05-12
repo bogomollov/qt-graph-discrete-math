@@ -63,6 +63,7 @@ private:
     qsizetype m_draggedVertexIndex = -1;
     bool m_isDirected = false;
     bool m_showEdgeWeights = false;
+    bool m_allSelected = false;
 
     void separateVertices(qsizetype pinned = -1);
 

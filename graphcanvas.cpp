@@ -89,6 +89,13 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 
 void GraphCanvas::keyPressEvent(QKeyEvent *event)
 {
+    if (event->key() == Qt::Key_A && event->modifiers() == Qt::ControlModifier) {
+        m_allSelected = !vertices.isEmpty() && !m_allSelected;
+        selectedVertexIndex = -1;
+        update();
+        return;
+    }
+
     if (event->key() == Qt::Key_Delete && selectedVertexIndex >= 0) {
         const qsizetype removedIndex = selectedVertexIndex;
         vertices.removeAt(removedIndex);
@@ -120,6 +127,7 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
 
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
 {
+    m_allSelected = false;
     setFocus();
     if (event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
@@ -274,7 +282,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         QColor outlineColor;
         if (index == startVertexIndex) {
             outlineColor = startVertexColor;  // Фиолетовый для стартовой
-        } else if (index == selectedVertexIndex) {
+        } else if (m_allSelected || index == selectedVertexIndex) {
             outlineColor = QColor(214, 130, 0);  // Оранжевый для выбранной
         } else {
             outlineColor = QColor(255, 174, 24); // Обычный цвет
@@ -364,6 +372,7 @@ void GraphCanvas::setData(const QVector<QPointF> &newVertices,
     edges = newEdges;
     selectedVertexIndex = -1;
     startVertexIndex = -1;
+    m_allSelected = false;
     m_highlights.clear();
     m_vertexColors.clear();
     separateVertices();
@@ -377,6 +386,7 @@ void GraphCanvas::clear()
     edges.clear();
     selectedVertexIndex = -1;
     startVertexIndex = -1;
+    m_allSelected = false;
     m_highlights.clear();
     m_vertexColors.clear();
     update();
