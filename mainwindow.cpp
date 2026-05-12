@@ -250,7 +250,7 @@ void MainWindow::buildSpanningTree(bool minimum)
 
     if (!spanningTreeCanvas->isVisible()) {
         const QRect mainGeometry = frameGeometry();
-        spanningTreeCanvas->move(mainGeometry.right(), mainGeometry.top());
+        spanningTreeCanvas->move(mainGeometry.center() - spanningTreeCanvas->rect().center());
         spanningTreeCanvas->show();
     }
 }
