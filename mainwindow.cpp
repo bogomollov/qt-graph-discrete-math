@@ -86,11 +86,6 @@ void MainWindow::on_bfsButton_clicked()
         return;
     }
 
-    if (animator->isRunning()) {
-        animator->stop();
-        return;
-    }
-
     auto steps = algorithms->bfs(*graphData, startVertex);
 
     QStringList order;
@@ -119,11 +114,6 @@ void MainWindow::on_dfsButton_clicked()
 
     // Устанавливаем стартовую вершину на холсте (фиолетовая подсветка)
     graphCanvas->setStartVertex(startVertex);
-
-    if (animator->isRunning()) {
-        animator->stop();
-        return;
-    }
 
     if (animator->isRunning()) {
         animator->stop();
