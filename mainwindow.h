@@ -2,16 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPlainTextEdit>
 #include <QVector>
 #include <QString>
+#include <QWidget>
 
 class GraphCanvas;
 class GraphData;
 class GraphAlgorithms;
 class GraphAnimator;
-
-class GraphCanvas;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -52,7 +50,7 @@ private:
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
-    QPlainTextEdit *spanningTreeOutput;
+    GraphCanvas *spanningTreeCanvas;
     void buildSpanningTree(bool minimum);
     void applyColoring(const QString &title, const QVector<int> &colorIndexes);
 

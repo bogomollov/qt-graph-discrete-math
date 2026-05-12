@@ -6,10 +6,26 @@
 #include "graphanimator.h"
 #include "graphfilemanager.h"
 
+#include <QMouseEvent>
+#include <QKeyEvent>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDir>
 #include <QColor>
+
+class ReadOnlyGraphCanvas : public GraphCanvas
+{
+public:
+    explicit ReadOnlyGraphCanvas(QWidget *parent = nullptr) : GraphCanvas(parent)
+    {
+        setCursor(Qt::ArrowCursor);
+    }
+protected:
+    void mousePressEvent(QMouseEvent *) override {}
+    void mouseMoveEvent(QMouseEvent *) override {}
+    void mouseReleaseEvent(QMouseEvent *) override {}
+    void keyPressEvent(QKeyEvent *) override {}
+};
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -19,13 +35,13 @@ MainWindow::MainWindow(QWidget *parent)
     , graphData(new GraphData)
     , algorithms(new GraphAlgorithms)
     , animator(new GraphAnimator(this))
-    , spanningTreeOutput(new QPlainTextEdit(nullptr))
+    , spanningTreeCanvas(new ReadOnlyGraphCanvas(nullptr))
 {
     ui->setupUi(this);
 
-    spanningTreeOutput->setWindowTitle(tr("Остовное дерево"));
-    spanningTreeOutput->setReadOnly(true);
-    spanningTreeOutput->resize(360, 200);
+    spanningTreeCanvas->setWindowTitle(tr("Остовное дерево"));
+    spanningTreeCanvas->resize(600, 500);
+    spanningTreeCanvas->setShowEdgeWeights(true);
     ui->animationSpeedCombo->setCurrentText("600"); // Базовая задержка
     setWindowTitle(tr("qt-graph-discrete-math"));
 
@@ -69,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
 // --- Деструктор ---
 MainWindow::~MainWindow()
 {
-    delete spanningTreeOutput;
+    delete spanningTreeCanvas;
     delete ui;
     delete graphData;
     delete algorithms;
@@ -232,21 +248,13 @@ void MainWindow::buildSpanningTree(bool minimum)
     graphCanvas->setData(vertices, treeEdges);
     graphCanvas->setShowEdgeWeights(true);
 
-    QStringList edges;
-    for (const auto &edge : treeEdges) {
-        edges << QString("%1-%2").arg(edge.first + 1).arg(edge.second + 1);
-    }
+    spanningTreeCanvas->setData(vertices, treeEdges);
+    spanningTreeCanvas->setShowEdgeWeights(true);
 
-    spanningTreeOutput->setPlainText(
-        QString("%1 остовное дерево: %2\nСуммарная длина: %3")
-            .arg(minimum ? "Минимальное" : "Максимальное")
-            .arg(edges.isEmpty() ? "нет рёбер" : edges.join(", "))
-            .arg(QString::number(totalWeight, 'f', 2)));
-
-    if (!spanningTreeOutput->isVisible()) {
+    if (!spanningTreeCanvas->isVisible()) {
         const QRect mainGeometry = frameGeometry();
-        spanningTreeOutput->move(mainGeometry.right(), mainGeometry.top());
-        spanningTreeOutput->show();
+        spanningTreeCanvas->move(mainGeometry.right(), mainGeometry.top());
+        spanningTreeCanvas->show();
     }
 }
 
