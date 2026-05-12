@@ -48,14 +48,17 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Подключаем изменение скорости анимации
     connect(ui->animationSpeedCombo, &QComboBox::currentTextChanged, [this](const QString &text) {
-        int speedValue = text.toInt();
-        int delay = 1200 - speedValue;
-        animator->setAnimationSpeed(delay);
+        bool ok = false;
+        int speedValue = text.toInt(&ok);
+        if (ok)
+            animator->setAnimationSpeed(1200 - speedValue);
     });
 
     // Устанавливаем начальную скорость
-    int initialSpeedValue = ui->animationSpeedCombo->currentText().toInt();
-    animator->setAnimationSpeed(1200 - initialSpeedValue);
+    bool ok = false;
+    int initialSpeedValue = ui->animationSpeedCombo->currentText().toInt(&ok);
+    if (ok)
+        animator->setAnimationSpeed(1200 - initialSpeedValue);
 }
 
 // --- Деструктор ---
