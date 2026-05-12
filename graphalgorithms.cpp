@@ -134,8 +134,8 @@ QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVer
     QQueue<int> queue;
 
     // Visit all components: start from startVertex, then restart from any unvisited vertex
-    for (int seed = 0; seed < graph.vertexCount(); ++seed) {
-        const int origin = (seed == 0) ? startVertex : seed;
+    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed < 0) ? startVertex : seed;
         if (visited[origin])
             continue;
 
