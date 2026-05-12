@@ -63,7 +63,7 @@ void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
 
 void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 {
-    if (!m_isDragging || m_draggedVertexIndex < 0)
+    if (!m_isDragging)
         return;
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -71,6 +71,19 @@ void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 #else
     const QPointF pos = event->pos();
 #endif
+
+    if (m_allSelected) {
+        const QPointF delta = pos - m_lastDragPos;
+        for (QPointF &v : vertices)
+            v += delta;
+        m_lastDragPos = pos;
+        update();
+        emit graphChanged();
+        return;
+    }
+
+    if (m_draggedVertexIndex < 0)
+        return;
 
     QPointF clamped = pos;
     for (qsizetype i = 0; i < vertices.size(); ++i) {
@@ -140,7 +153,6 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
 
 void GraphCanvas::mousePressEvent(QMouseEvent *event)
 {
-    m_allSelected = false;
     setFocus();
     if (event->button() != Qt::LeftButton) {
         QWidget::mousePressEvent(event);
@@ -152,6 +164,12 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
 #else
     const QPointF clickPosition = event->pos();
 #endif
+
+    if (m_allSelected) {
+        m_isDragging = true;
+        m_lastDragPos = clickPosition;
+        return;
+    }
 
     qsizetype clickedVertexIndex = -1;
     qreal closestDistanceSquared = 0.0;

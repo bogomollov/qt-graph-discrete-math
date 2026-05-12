@@ -64,6 +64,7 @@ private:
     bool m_isDirected = false;
     bool m_showEdgeWeights = false;
     bool m_allSelected = false;
+    QPointF m_lastDragPos;
 
     void separateVertices(qsizetype pinned = -1);
 
