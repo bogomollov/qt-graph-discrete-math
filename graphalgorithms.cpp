@@ -134,8 +134,9 @@ QVector<AlgorithmStep> GraphAlgorithms::bfs(const GraphData &graph, int startVer
     QVector<bool> visited(graph.vertexCount(), false);
     QQueue<int> queue;
 
-    // Visit all components: start from startVertex, then restart from any unvisited vertex
-    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+    // For undirected graphs visit all components; for directed only follow from startVertex
+    const int seedLimit = graph.isDirected() ? 0 : graph.vertexCount();
+    for (int seed = -1; seed < seedLimit; ++seed) {
         const int origin = (seed < 0) ? startVertex : seed;
         if (visited[origin])
             continue;
@@ -307,8 +308,9 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
     QVector<bool> visited(graph.vertexCount(), false);
     QVector<int> stack;
 
-    // Visit all components: start from startVertex, then restart from any unvisited vertex
-    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+    // For undirected graphs visit all components; for directed only follow from startVertex
+    const int seedLimit = graph.isDirected() ? 0 : graph.vertexCount();
+    for (int seed = -1; seed < seedLimit; ++seed) {
         const int origin = (seed < 0) ? startVertex : seed;
         if (visited[origin])
             continue;
