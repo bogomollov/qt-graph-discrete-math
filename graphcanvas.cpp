@@ -166,8 +166,23 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
 #endif
 
     if (m_allSelected) {
-        m_isDragging = true;
-        m_lastDragPos = clickPosition;
+        const qreal hitRadius = vertexRadius + vertexClickTolerance;
+        const qreal hitRadiusSquared = hitRadius * hitRadius;
+        bool hitVertex = false;
+        for (qsizetype index = 0; index < vertices.size(); ++index) {
+            const QPointF d = vertices.at(index) - clickPosition;
+            if (QPointF::dotProduct(d, d) <= hitRadiusSquared) {
+                hitVertex = true;
+                break;
+            }
+        }
+        if (hitVertex) {
+            m_isDragging = true;
+            m_lastDragPos = clickPosition;
+        } else {
+            m_allSelected = false;
+            update();
+        }
         return;
     }
 
