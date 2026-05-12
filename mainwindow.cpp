@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QDir>
 #include <QColor>
+#include <QShowEvent>
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -19,8 +20,13 @@ MainWindow::MainWindow(QWidget *parent)
     , graphData(new GraphData)
     , algorithms(new GraphAlgorithms)
     , animator(new GraphAnimator(this))
+    , spanningTreeOutput(new QPlainTextEdit(nullptr))
 {
     ui->setupUi(this);
+
+    spanningTreeOutput->setWindowTitle(tr("Остовное дерево"));
+    spanningTreeOutput->setReadOnly(true);
+    spanningTreeOutput->resize(360, 200);
     ui->animationSpeedCombo->setCurrentText("600"); // Базовая задержка
     setWindowTitle(tr("qt-graph-discrete-math"));
 
@@ -64,9 +70,18 @@ MainWindow::MainWindow(QWidget *parent)
 // --- Деструктор ---
 MainWindow::~MainWindow()
 {
+    delete spanningTreeOutput;
     delete ui;
     delete graphData;
     delete algorithms;
+}
+
+void MainWindow::showEvent(QShowEvent *event)
+{
+    QMainWindow::showEvent(event);
+    const QRect mainGeometry = frameGeometry();
+    spanningTreeOutput->move(mainGeometry.right(), mainGeometry.top());
+    spanningTreeOutput->show();
 }
 
 // --- Обработчик кнопки BFS ---
@@ -230,7 +245,7 @@ void MainWindow::buildSpanningTree(bool minimum)
         edges << QString("%1-%2").arg(edge.first + 1).arg(edge.second + 1);
     }
 
-    ui->logOutput->appendPlainText(
+    spanningTreeOutput->setPlainText(
         QString("%1 остовное дерево: %2\nСуммарная длина: %3")
             .arg(minimum ? "Минимальное" : "Максимальное")
             .arg(edges.isEmpty() ? "нет рёбер" : edges.join(", "))

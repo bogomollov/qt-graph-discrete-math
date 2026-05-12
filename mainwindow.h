@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <qplaintextedit.h>
+#include <QPlainTextEdit>
 #include <QVector>
 #include <QString>
 
@@ -46,12 +46,16 @@ private slots:
     void on_directedToggleButton_toggled(bool checked);
     void on_dijkstraButton_clicked();
 
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
     GraphCanvas *graphCanvas;
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
+    QPlainTextEdit *spanningTreeOutput;
     void buildSpanningTree(bool minimum);
     void applyColoring(const QString &title, const QVector<int> &colorIndexes);
 
