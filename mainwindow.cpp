@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     spanningTreeWindow->setWindowTitle(tr("Остовное дерево"));
     spanningTreeWindow->resize(600, 540);
+    spanningTreeWindow->setStyleSheet("background-color: white;");
 
     QPushButton *transferButton = new QPushButton(tr("Перенести в основное окно"), spanningTreeWindow);
     connect(transferButton, &QPushButton::clicked, [this]() {
