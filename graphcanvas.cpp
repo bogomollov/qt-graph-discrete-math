@@ -309,10 +309,7 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
             if (dist < vertexRadius * 2.0 + 8.0)
                 continue;
 
-            // Offset label perpendicularly from the edge midpoint
-            QPointF mid = (a + b) / 2.0;
-            const QPointF perp(-delta.y() / dist, delta.x() / dist);
-            mid += perp * 15.0;
+            const QPointF mid = (a + b) / 2.0;
 
             const QRectF centeredRect = labelRect.translated(mid - labelRect.center());
             painter.setPen(Qt::NoPen);
