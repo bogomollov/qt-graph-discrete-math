@@ -8,6 +8,8 @@
 
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QVBoxLayout>
+#include <QPushButton>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDir>
@@ -35,12 +37,25 @@ MainWindow::MainWindow(QWidget *parent)
     , graphData(new GraphData)
     , algorithms(new GraphAlgorithms)
     , animator(new GraphAnimator(this))
-    , spanningTreeCanvas(new ReadOnlyGraphCanvas(nullptr))
+    , spanningTreeWindow(new QWidget(nullptr))
+    , spanningTreeCanvas(new ReadOnlyGraphCanvas(spanningTreeWindow))
 {
     ui->setupUi(this);
 
-    spanningTreeCanvas->setWindowTitle(tr("Остовное дерево"));
-    spanningTreeCanvas->resize(600, 500);
+    spanningTreeWindow->setWindowTitle(tr("Остовное дерево"));
+    spanningTreeWindow->resize(600, 540);
+
+    QPushButton *transferButton = new QPushButton(tr("Перенести в основное окно"), spanningTreeWindow);
+    connect(transferButton, &QPushButton::clicked, [this]() {
+        graphCanvas->setData(spanningTreeCanvas->getVertices(), spanningTreeCanvas->getEdges());
+        graphCanvas->setShowEdgeWeights(true);
+    });
+
+    QVBoxLayout *layout = new QVBoxLayout(spanningTreeWindow);
+    layout->setContentsMargins(0, 0, 0, 4);
+    layout->addWidget(spanningTreeCanvas);
+    layout->addWidget(transferButton);
+
     spanningTreeCanvas->setShowEdgeWeights(true);
     ui->animationSpeedCombo->setCurrentText("600"); // Базовая задержка
     setWindowTitle(tr("qt-graph-discrete-math"));
@@ -85,7 +100,7 @@ MainWindow::MainWindow(QWidget *parent)
 // --- Деструктор ---
 MainWindow::~MainWindow()
 {
-    delete spanningTreeCanvas;
+    delete spanningTreeWindow;
     delete ui;
     delete graphData;
     delete algorithms;
@@ -248,10 +263,10 @@ void MainWindow::buildSpanningTree(bool minimum)
     spanningTreeCanvas->setData(vertices, treeEdges);
     spanningTreeCanvas->setShowEdgeWeights(true);
 
-    if (!spanningTreeCanvas->isVisible()) {
+    if (!spanningTreeWindow->isVisible()) {
         const QRect mainGeometry = frameGeometry();
-        spanningTreeCanvas->move(mainGeometry.center() - spanningTreeCanvas->rect().center());
-        spanningTreeCanvas->show();
+        spanningTreeWindow->move(mainGeometry.center() - spanningTreeWindow->rect().center());
+        spanningTreeWindow->show();
     }
 }
 

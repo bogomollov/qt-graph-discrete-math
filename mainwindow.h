@@ -50,6 +50,7 @@ private:
     GraphData *graphData;
     GraphAlgorithms *algorithms;
     GraphAnimator *animator;
+    QWidget *spanningTreeWindow;
     GraphCanvas *spanningTreeCanvas;
     void buildSpanningTree(bool minimum);
     void applyColoring(const QString &title, const QVector<int> &colorIndexes);
