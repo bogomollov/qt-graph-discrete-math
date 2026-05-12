@@ -305,8 +305,8 @@ QVector<AlgorithmStep> GraphAlgorithms::dfs(const GraphData &graph, int startVer
     QVector<int> stack;
 
     // Visit all components: start from startVertex, then restart from any unvisited vertex
-    for (int seed = 0; seed < graph.vertexCount(); ++seed) {
-        const int origin = (seed == 0) ? startVertex : seed;
+    for (int seed = -1; seed < graph.vertexCount(); ++seed) {
+        const int origin = (seed < 0) ? startVertex : seed;
         if (visited[origin])
             continue;
 
