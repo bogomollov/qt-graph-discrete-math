@@ -52,6 +52,7 @@ private:
     GraphAnimator *animator;
     QWidget *spanningTreeWindow;
     GraphCanvas *spanningTreeCanvas;
+    QWidget *adjacencyMatrixWindow;
     void buildSpanningTree(bool minimum);
     void applyColoring(const QString &title, const QVector<int> &colorIndexes);
 

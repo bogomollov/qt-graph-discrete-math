@@ -10,6 +10,8 @@
 #include <QKeyEvent>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QTableWidget>
+#include <QHeaderView>
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QDir>
@@ -39,6 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     , animator(new GraphAnimator(this))
     , spanningTreeWindow(new QWidget(nullptr))
     , spanningTreeCanvas(new ReadOnlyGraphCanvas(spanningTreeWindow))
+    , adjacencyMatrixWindow(new QWidget(nullptr))
 {
     ui->setupUi(this);
 
@@ -103,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow()
 {
     delete spanningTreeWindow;
+    delete adjacencyMatrixWindow;
     delete ui;
     delete graphData;
     delete algorithms;
@@ -475,7 +479,66 @@ void MainWindow::on_actionClearLog_triggered()
 // --- Меню Граф ---
 void MainWindow::on_actionAdjacencyMatrix_triggered()
 {
-    ui->logOutput->appendPlainText("Матрица смежности пока не реализована");
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
+    const int n = graphData->vertexCount();
+
+    if (n == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    // Build weight matrix
+    const QVector<QPointF> &verts = graphData->vertices();
+    QVector<QVector<double>> matrix(n, QVector<double>(n, 0.0));
+    for (const auto &edge : graphData->edges()) {
+        const int a = static_cast<int>(edge.first);
+        const int b = static_cast<int>(edge.second);
+        const QPointF delta = verts.at(a) - verts.at(b);
+        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
+        matrix[a][b] = w;
+        if (!graphData->isDirected())
+            matrix[b][a] = w;
+    }
+
+    // Rebuild table in the window
+    QTableWidget *table = adjacencyMatrixWindow->findChild<QTableWidget *>();
+    if (!table) {
+        QVBoxLayout *layout = new QVBoxLayout(adjacencyMatrixWindow);
+        layout->setContentsMargins(4, 4, 4, 4);
+        table = new QTableWidget(adjacencyMatrixWindow);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionMode(QAbstractItemView::NoSelection);
+        layout->addWidget(table);
+        adjacencyMatrixWindow->setWindowTitle(tr("Матрица смежности"));
+    }
+
+    table->setRowCount(n);
+    table->setColumnCount(n);
+    QStringList headers;
+    for (int i = 0; i < n; ++i)
+        headers << QString::number(i + 1);
+    table->setHorizontalHeaderLabels(headers);
+    table->setVerticalHeaderLabels(headers);
+
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            const double w = matrix[i][j];
+            const QString text = (w == 0.0) ? "0" : QString::number(static_cast<long long>(w));
+            QTableWidgetItem *item = new QTableWidgetItem(text);
+            item->setTextAlignment(Qt::AlignCenter);
+            table->setItem(i, j, item);
+        }
+    }
+
+    table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    table->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+
+    adjacencyMatrixWindow->resize(qMin(n * 60 + 60, 700), qMin(n * 30 + 60, 600));
+
+    const QRect mainGeometry = frameGeometry();
+    adjacencyMatrixWindow->move(mainGeometry.center() - adjacencyMatrixWindow->rect().center());
+    adjacencyMatrixWindow->show();
+    adjacencyMatrixWindow->raise();
 }
 
 void MainWindow::on_actionAdjacencyList_triggered()
