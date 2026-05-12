@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     , spanningTreeWindow(new QWidget(nullptr))
     , spanningTreeCanvas(new ReadOnlyGraphCanvas(spanningTreeWindow))
     , adjacencyMatrixWindow(new QWidget(nullptr))
+    , adjacencyListWindow(new QWidget(nullptr))
 {
     ui->setupUi(this);
 
@@ -107,6 +108,7 @@ MainWindow::~MainWindow()
 {
     delete spanningTreeWindow;
     delete adjacencyMatrixWindow;
+    delete adjacencyListWindow;
     delete ui;
     delete graphData;
     delete algorithms;
@@ -543,7 +545,48 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
 
 void MainWindow::on_actionAdjacencyList_triggered()
 {
-    ui->logOutput->appendPlainText("Список смежности пока не реализован");
+    graphData->setData(graphCanvas->getVertices(), graphCanvas->getEdges());
+    const int n = graphData->vertexCount();
+
+    if (n == 0) {
+        ui->logOutput->appendPlainText("Ошибка: граф пуст!");
+        return;
+    }
+
+    QTableWidget *table = adjacencyListWindow->findChild<QTableWidget *>();
+    if (!table) {
+        QVBoxLayout *layout = new QVBoxLayout(adjacencyListWindow);
+        layout->setContentsMargins(4, 4, 4, 4);
+        table = new QTableWidget(adjacencyListWindow);
+        table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+        table->setSelectionMode(QAbstractItemView::NoSelection);
+        table->setColumnCount(2);
+        table->setHorizontalHeaderLabels({tr("Вершина"), tr("Смежные вершины")});
+        layout->addWidget(table);
+        adjacencyListWindow->setWindowTitle(tr("Список смежности"));
+    }
+
+    table->setRowCount(n);
+    for (int i = 0; i < n; ++i) {
+        table->setItem(i, 0, new QTableWidgetItem(QString::number(i + 1)));
+        table->item(i, 0)->setTextAlignment(Qt::AlignCenter);
+
+        QStringList neighbours;
+        for (qsizetype nb : graphData->getNeighbors(static_cast<qsizetype>(i)))
+            neighbours << QString::number(static_cast<int>(nb) + 1);
+        table->setItem(i, 1, new QTableWidgetItem(neighbours.join(", ")));
+    }
+
+    table->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Stretch);
+    table->verticalHeader()->hide();
+
+    adjacencyListWindow->resize(360, qMin(n * 30 + 60, 600));
+
+    const QRect mainGeometry = frameGeometry();
+    adjacencyListWindow->move(mainGeometry.center() - adjacencyListWindow->rect().center());
+    adjacencyListWindow->show();
+    adjacencyListWindow->raise();
 }
 
 void MainWindow::on_directedToggleButton_toggled(bool checked)
