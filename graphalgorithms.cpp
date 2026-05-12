@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <QQueue>
+#include <QSet>
 #include <QVector>
 
 namespace {
@@ -255,11 +256,13 @@ QVector<int> GraphAlgorithms::backtrackingColoring(const GraphData &graph)
     const int vertexCount = graph.vertexCount();
     QVector<QVector<int>> adjacency(vertexCount);
 
+    QVector<QSet<int>> seen(vertexCount);
     for (int vertex = 0; vertex < vertexCount; ++vertex) {
         for (qsizetype neighborIndex : graph.getNeighborsUndirected(vertex)) {
             const int neighbor = static_cast<int>(neighborIndex);
             if (neighbor >= 0 && neighbor < vertexCount && neighbor != vertex
-                && !adjacency[vertex].contains(neighbor)) {
+                && !seen[vertex].contains(neighbor)) {
+                seen[vertex].insert(neighbor);
                 adjacency[vertex].append(neighbor);
             }
         }
@@ -357,6 +360,18 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &
     QVector<bool> visited(n, false);
     dist[startVertex] = 0.0;
 
+    // Build adjacency list once to avoid O(|E|) edge scan per iteration
+    QVector<QVector<QPair<int, double>>> adj(n);
+    for (const auto &edge : graph.edges()) {
+        const int a = static_cast<int>(edge.first);
+        const int b = static_cast<int>(edge.second);
+        const QPointF delta = graph.vertices().at(a) - graph.vertices().at(b);
+        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
+        adj[a].append(qMakePair(b, w));
+        if (!graph.isDirected())
+            adj[b].append(qMakePair(a, w));
+    }
+
     for (int iter = 0; iter < n; ++iter) {
         // Pick unvisited vertex with smallest distance
         int u = -1;
@@ -368,18 +383,10 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &
             break;
         visited[u] = true;
 
-        for (const auto &edge : graph.edges()) {
-            int v = -1;
-            if (static_cast<int>(edge.first) == u)
-                v = static_cast<int>(edge.second);
-            else if (!graph.isDirected() && static_cast<int>(edge.second) == u)
-                v = static_cast<int>(edge.first);
-            if (v < 0 || visited[v])
-                continue;
-
-            const QPointF delta = graph.vertices().at(u) - graph.vertices().at(v);
-            const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
-            if (dist[u] + w < dist[v]) {
+        for (const auto &neighbor : adj[u]) {
+            const int v = neighbor.first;
+            const double w = neighbor.second;
+            if (!visited[v] && dist[u] + w < dist[v]) {
                 dist[v] = dist[u] + w;
                 prev[v] = u;
             }
