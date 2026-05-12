@@ -96,6 +96,19 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
         return;
     }
 
+    if (event->key() == Qt::Key_Delete && m_allSelected) {
+        vertices.clear();
+        edges.clear();
+        selectedVertexIndex = -1;
+        startVertexIndex = -1;
+        m_allSelected = false;
+        m_highlights.clear();
+        m_vertexColors.clear();
+        update();
+        emit graphChanged();
+        return;
+    }
+
     if (event->key() == Qt::Key_Delete && selectedVertexIndex >= 0) {
         const qsizetype removedIndex = selectedVertexIndex;
         vertices.removeAt(removedIndex);
