@@ -308,7 +308,7 @@ void MainWindow::on_backtrackingColoringButton_clicked()
         return;
     }
 
-    graphCanvas->setShowEdgeWeights(false);
+    graphCanvas->setShowEdgeWeights(true);
     applyColoring("Раскраска с возвратом", algorithms->backtrackingColoring(*graphData));
 }
 
