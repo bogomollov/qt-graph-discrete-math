@@ -46,9 +46,6 @@ private slots:
     void on_directedToggleButton_toggled(bool checked);
     void on_dijkstraButton_clicked();
 
-protected:
-    void showEvent(QShowEvent *event) override;
-
 private:
     Ui::MainWindow *ui;
     GraphCanvas *graphCanvas;

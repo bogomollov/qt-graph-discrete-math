@@ -10,7 +10,6 @@
 #include <QFileDialog>
 #include <QDir>
 #include <QColor>
-#include <QShowEvent>
 
 // --- Конструктор ---
 MainWindow::MainWindow(QWidget *parent)
@@ -76,13 +75,6 @@ MainWindow::~MainWindow()
     delete algorithms;
 }
 
-void MainWindow::showEvent(QShowEvent *event)
-{
-    QMainWindow::showEvent(event);
-    const QRect mainGeometry = frameGeometry();
-    spanningTreeOutput->move(mainGeometry.right(), mainGeometry.top());
-    spanningTreeOutput->show();
-}
 
 // --- Обработчик кнопки BFS ---
 void MainWindow::on_bfsButton_clicked()
@@ -250,6 +242,12 @@ void MainWindow::buildSpanningTree(bool minimum)
             .arg(minimum ? "Минимальное" : "Максимальное")
             .arg(edges.isEmpty() ? "нет рёбер" : edges.join(", "))
             .arg(QString::number(totalWeight, 'f', 2)));
+
+    if (!spanningTreeOutput->isVisible()) {
+        const QRect mainGeometry = frameGeometry();
+        spanningTreeOutput->move(mainGeometry.right(), mainGeometry.top());
+        spanningTreeOutput->show();
+    }
 }
 
 void MainWindow::on_greedyColoringButton_clicked()
