@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(transferButton, &QPushButton::clicked, [this]() {
         graphCanvas->setData(spanningTreeCanvas->getVertices(), spanningTreeCanvas->getEdges());
         graphCanvas->setShowEdgeWeights(true);
+        spanningTreeWindow->hide();
     });
 
     QVBoxLayout *layout = new QVBoxLayout(spanningTreeWindow);
