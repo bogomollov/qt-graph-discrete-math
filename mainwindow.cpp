@@ -231,7 +231,7 @@ void MainWindow::on_dijkstraButton_clicked()
         QString("Дейкстра %1→%2: %3\nДлина пути: %4")
             .arg(from + 1).arg(to + 1)
             .arg(steps.join(" → "))
-            .arg(QString::number(totalWeight, 'f', 2)));
+            .arg(static_cast<long long>(totalWeight)));
 }
 
 // --- Меню Файл ---
@@ -489,17 +489,14 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
         return;
     }
 
-    // Build weight matrix
-    const QVector<QPointF> &verts = graphData->vertices();
-    QVector<QVector<double>> matrix(n, QVector<double>(n, 0.0));
+    // Build adjacency matrix
+    QVector<QVector<int>> matrix(n, QVector<int>(n, 0));
     for (const auto &edge : graphData->edges()) {
         const int a = static_cast<int>(edge.first);
         const int b = static_cast<int>(edge.second);
-        const QPointF delta = verts.at(a) - verts.at(b);
-        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
-        matrix[a][b] = w;
+        matrix[a][b] = 1;
         if (!graphData->isDirected())
-            matrix[b][a] = w;
+            matrix[b][a] = 1;
     }
 
     // Rebuild table in the window
@@ -524,9 +521,7 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
 
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
-            const double w = matrix[i][j];
-            const QString text = (w == 0.0) ? "0" : QString::number(static_cast<long long>(w));
-            QTableWidgetItem *item = new QTableWidgetItem(text);
+            QTableWidgetItem *item = new QTableWidgetItem(QString::number(matrix[i][j]));
             item->setTextAlignment(Qt::AlignCenter);
             table->setItem(i, j, item);
         }

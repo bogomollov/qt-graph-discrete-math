@@ -1,7 +1,6 @@
 #include "graphalgorithms.h"
 #include "graphdata.h"
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <QQueue>
 #include <QSet>
@@ -190,20 +189,12 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
             continue;
         }
 
-        const QPointF delta = graph.vertices().at(edge.first) - graph.vertices().at(edge.second);
-        weightedEdges.append({edge.first, edge.second, edgeDisplayWeight(std::hypot(delta.x(), delta.y()))});
+        weightedEdges.append({edge.first, edge.second, 1.0});
     }
 
-    std::sort(weightedEdges.begin(), weightedEdges.end(),
-              [minimum](const WeightedEdge &left, const WeightedEdge &right) {
-                  if (left.weight == right.weight) {
-                      if (left.from == right.from) {
-                          return left.to < right.to;
-                      }
-                      return left.from < right.from;
-                  }
-                  return minimum ? left.weight < right.weight : left.weight > right.weight;
-              });
+    if (!minimum) {
+        std::reverse(weightedEdges.begin(), weightedEdges.end());
+    }
 
     DisjointSet components(vertexCount);
     treeEdges.reserve(vertexCount - 1);
@@ -367,11 +358,9 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &
     for (const auto &edge : graph.edges()) {
         const int a = static_cast<int>(edge.first);
         const int b = static_cast<int>(edge.second);
-        const QPointF delta = graph.vertices().at(a) - graph.vertices().at(b);
-        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
-        adj[a].append(qMakePair(b, w));
+        adj[a].append(qMakePair(b, 1.0));
         if (!graph.isDirected())
-            adj[b].append(qMakePair(a, w));
+            adj[b].append(qMakePair(a, 1.0));
     }
 
     for (int iter = 0; iter < n; ++iter) {
