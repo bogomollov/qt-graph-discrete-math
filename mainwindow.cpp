@@ -16,6 +16,7 @@
 #include <QFileDialog>
 #include <QDir>
 #include <QColor>
+#include <cmath>
 
 class ReadOnlyGraphCanvas : public GraphCanvas
 {
@@ -52,8 +53,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     QPushButton *transferButton = new QPushButton(tr("Перенести в основное окно"), spanningTreeWindow);
     connect(transferButton, &QPushButton::clicked, [this]() {
-        graphCanvas->setData(spanningTreeCanvas->getVertices(), spanningTreeCanvas->getEdges());
-        graphCanvas->setShowEdgeWeights(true);
+        graphCanvas->setData(spanningTreeCanvas->getVertices(),
+                             spanningTreeCanvas->getEdges(),
+                             spanningTreeCanvas->getEdgeWeights());
         spanningTreeWindow->hide();
     });
 
@@ -76,7 +78,8 @@ MainWindow::MainWindow(QWidget *parent)
     // При изменении графа обновляем данные
     connect(graphCanvas, &GraphCanvas::graphChanged, [this]() {
         graphData->setData(graphCanvas->getVertices(),
-                           graphCanvas->getEdges());
+                           graphCanvas->getEdges(),
+                           graphCanvas->getEdgeWeights());
     });
 
     animator->setCanvas(graphCanvas);
@@ -208,7 +211,6 @@ void MainWindow::on_dijkstraButton_clicked()
         algorithms->dijkstra(*graphData, from, to, &totalWeight);
 
     graphCanvas->clearHighlights();
-    graphCanvas->setShowEdgeWeights(false);
 
     if (path.isEmpty()) {
         ui->logOutput->appendPlainText(
@@ -225,7 +227,6 @@ void MainWindow::on_dijkstraButton_clicked()
                                    pathColor);
         steps << QString::number(edge.second + 1);
     }
-    graphCanvas->setShowEdgeWeights(true);
 
     ui->logOutput->appendPlainText(
         QString("Дейкстра %1→%2: %3\nДлина пути: %4")
@@ -252,7 +253,7 @@ void MainWindow::buildSpanningTree(bool minimum)
     }
 
     const QVector<QPointF> vertices = graphCanvas->getVertices();
-    graphData->setData(vertices, graphCanvas->getEdges());
+    graphData->setData(vertices, graphCanvas->getEdges(), graphCanvas->getEdgeWeights());
 
     if (graphData->vertexCount() == 0) {
         ui->logOutput->appendPlainText("Ошибка: граф пуст!");
@@ -268,8 +269,25 @@ void MainWindow::buildSpanningTree(bool minimum)
         return;
     }
 
-    spanningTreeCanvas->setData(vertices, treeEdges);
-    spanningTreeCanvas->setShowEdgeWeights(true);
+    // Look up the weight for each tree edge from the original graph
+    const QVector<QPair<qsizetype, qsizetype>> &srcEdges = graphData->edges();
+    const QVector<double> &srcWeights = graphData->edgeWeights();
+    QVector<double> treeWeights;
+    treeWeights.reserve(treeEdges.size());
+    for (const auto &te : treeEdges) {
+        double w = 1.0;
+        for (qsizetype i = 0; i < srcEdges.size(); ++i) {
+            const auto &se = srcEdges.at(i);
+            if ((se.first == te.first && se.second == te.second)
+                || (!graphData->isDirected() && se.first == te.second && se.second == te.first)) {
+                w = i < srcWeights.size() ? srcWeights.at(i) : 1.0;
+                break;
+            }
+        }
+        treeWeights.append(w);
+    }
+
+    spanningTreeCanvas->setData(vertices, treeEdges, treeWeights);
 
     if (!spanningTreeWindow->isVisible()) {
         const QRect mainGeometry = frameGeometry();
@@ -291,7 +309,6 @@ void MainWindow::on_greedyColoringButton_clicked()
         return;
     }
 
-    graphCanvas->setShowEdgeWeights(true);
     applyColoring("Жадная раскраска", algorithms->greedyColoring(*graphData));
 }
 
@@ -308,14 +325,12 @@ void MainWindow::on_backtrackingColoringButton_clicked()
         return;
     }
 
-    graphCanvas->setShowEdgeWeights(true);
     applyColoring("Раскраска с возвратом", algorithms->backtrackingColoring(*graphData));
 }
 
 void MainWindow::on_clearColoringButton_clicked()
 {
     graphCanvas->clearVertexColors();
-    graphCanvas->setShowEdgeWeights(false);
     ui->logOutput->appendPlainText("Раскраска очищена.");
 }
 
@@ -375,7 +390,6 @@ void MainWindow::on_actionNewGraph_triggered()
     }
 
     graphCanvas->clear();
-    graphCanvas->setShowEdgeWeights(false);
     m_lastSavePath.clear();
     ui->logOutput->appendPlainText("Создан новый граф");
 }
@@ -406,7 +420,7 @@ void MainWindow::on_actionSaveGraph_triggered()
 
     // Сохраняем через менеджер
     QString errorMsg;
-    if (GraphFileManager::saveToFile(fileName, vertices, edges, graphCanvas->isDirected(), &errorMsg)) {
+    if (GraphFileManager::saveToFile(fileName, vertices, edges, graphCanvas->getEdgeWeights(), graphCanvas->isDirected(), &errorMsg)) {
         ui->logOutput->appendPlainText(
             QString("Граф сохранён: %1 вершин, %2 рёбер\nФайл: %3")
                 .arg(vertices.size())
@@ -445,18 +459,18 @@ void MainWindow::on_actionLoadGraph_triggered()
     // Загружаем данные
     QVector<QPointF> vertices;
     QVector<QPair<qsizetype, qsizetype>> edges;
+    QVector<double> weights;
     bool directed = false;
 
     QString errorMsg;
-    if (GraphFileManager::loadFromFile(fileName, vertices, edges, &directed, &errorMsg)) {
+    if (GraphFileManager::loadFromFile(fileName, vertices, edges, &weights, &directed, &errorMsg)) {
         ui->logOutput->appendPlainText(
             QString("Граф загружен: %1 вершин, %2 рёбер\nФайл: %3")
                 .arg(vertices.size())
                 .arg(edges.size())
                 .arg(fileName));
 
-        graphCanvas->setData(vertices, edges);
-        graphCanvas->setShowEdgeWeights(false);
+        graphCanvas->setData(vertices, edges, weights);
         graphCanvas->setDirected(directed);
         graphData->setDirected(directed);
         ui->directedToggleButton->setChecked(directed);
@@ -490,13 +504,13 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
     }
 
     // Build weight matrix
-    const QVector<QPointF> &verts = graphData->vertices();
+    const QVector<double> &weights = graphData->edgeWeights();
     QVector<QVector<double>> matrix(n, QVector<double>(n, 0.0));
-    for (const auto &edge : graphData->edges()) {
+    for (qsizetype i = 0; i < graphData->edges().size(); ++i) {
+        const auto &edge = graphData->edges().at(i);
         const int a = static_cast<int>(edge.first);
         const int b = static_cast<int>(edge.second);
-        const QPointF delta = verts.at(a) - verts.at(b);
-        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
+        const double w = i < weights.size() ? weights.at(i) : 1.0;
         matrix[a][b] = w;
         if (!graphData->isDirected())
             matrix[b][a] = w;
@@ -525,7 +539,9 @@ void MainWindow::on_actionAdjacencyMatrix_triggered()
     for (int i = 0; i < n; ++i) {
         for (int j = 0; j < n; ++j) {
             const double w = matrix[i][j];
-            const QString text = (w == 0.0) ? "0" : QString::number(static_cast<long long>(w));
+            const QString text = (w == std::floor(w))
+                ? QString::number(static_cast<long long>(w))
+                : QString::number(w, 'f', 2);
             QTableWidgetItem *item = new QTableWidgetItem(text);
             item->setTextAlignment(Qt::AlignCenter);
             table->setItem(i, j, item);

@@ -8,6 +8,7 @@
 bool GraphFileManager::saveToFile(const QString &fileName,
                                   const QVector<QPointF> &vertices,
                                   const QVector<QPair<qsizetype, qsizetype>> &edges,
+                                  const QVector<double> &weights,
                                   bool directed,
                                   QString *errorMessage)
 {
@@ -20,7 +21,6 @@ bool GraphFileManager::saveToFile(const QString &fileName,
         return false;
     }
 
-    // Создаем JSON объект для вершин
     QJsonArray verticesArray;
     for (const QPointF &vertex : vertices) {
         QJsonObject vertexObj;
@@ -29,16 +29,15 @@ bool GraphFileManager::saveToFile(const QString &fileName,
         verticesArray.append(vertexObj);
     }
 
-    // Создаем JSON объект для ребер
     QJsonArray edgesArray;
-    for (const auto &edge : edges) {
+    for (qsizetype i = 0; i < edges.size(); ++i) {
         QJsonObject edgeObj;
-        edgeObj["from"] = static_cast<int>(edge.first);
-        edgeObj["to"] = static_cast<int>(edge.second);
+        edgeObj["from"] = static_cast<int>(edges.at(i).first);
+        edgeObj["to"] = static_cast<int>(edges.at(i).second);
+        edgeObj["weight"] = (i < weights.size()) ? weights.at(i) : 1.0;
         edgesArray.append(edgeObj);
     }
 
-    // Создаем корневой объект
     QJsonObject rootObj;
     rootObj["version"] = "1.0";
     rootObj["directed"] = directed;
@@ -56,6 +55,7 @@ bool GraphFileManager::saveToFile(const QString &fileName,
 bool GraphFileManager::loadFromFile(const QString &fileName,
                                     QVector<QPointF> &vertices,
                                     QVector<QPair<qsizetype, qsizetype>> &edges,
+                                    QVector<double> *weights,
                                     bool *directed,
                                     QString *errorMessage)
 {
@@ -129,6 +129,10 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
     QJsonArray edgesArray = rootObj["edges"].toArray();
     edges.clear();
     edges.reserve(edgesArray.size());
+    if (weights) {
+        weights->clear();
+        weights->reserve(edgesArray.size());
+    }
 
     for (const QJsonValue &value : edgesArray) {
         QJsonObject edgeObj = value.toObject();
@@ -143,7 +147,6 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
         const int fromInt = edgeObj["from"].toInt(-1);
         const int toInt = edgeObj["to"].toInt(-1);
 
-        // Проверяем валидность индексов
         if (fromInt < 0 || fromInt >= vertices.size() || toInt < 0 || toInt >= vertices.size()) {
             if (errorMessage) {
                 *errorMessage = QString("Некорректное ребро: вершины %1-%2 не существуют")
@@ -153,6 +156,8 @@ bool GraphFileManager::loadFromFile(const QString &fileName,
         }
 
         edges.append(qMakePair(static_cast<qsizetype>(fromInt), static_cast<qsizetype>(toInt)));
+        if (weights)
+            weights->append(edgeObj["weight"].toDouble(1.0));
     }
 
     return true;

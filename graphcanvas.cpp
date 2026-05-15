@@ -6,6 +6,7 @@
 #include <QString>
 #include <QColor>
 #include <QKeyEvent>
+#include <QInputDialog>
 
 #include <algorithm>
 #include <utility>
@@ -61,6 +62,64 @@ void GraphCanvas::mouseReleaseEvent(QMouseEvent *event)
     QWidget::mouseReleaseEvent(event);
 }
 
+qsizetype GraphCanvas::edgeAt(const QPointF &pos) const
+{
+    constexpr qreal hitThreshold = 8.0;
+    for (qsizetype i = 0; i < edges.size(); ++i) {
+        const QPointF &a = vertices.at(edges.at(i).first);
+        const QPointF &b = vertices.at(edges.at(i).second);
+        const QPointF ab = b - a;
+        const qreal lenSq = QPointF::dotProduct(ab, ab);
+        if (lenSq < 1e-6)
+            continue;
+        const qreal t = qBound(0.0, QPointF::dotProduct(pos - a, ab) / lenSq, 1.0);
+        const QPointF closest = a + t * ab;
+        const QPointF diff = pos - closest;
+        if (QPointF::dotProduct(diff, diff) <= hitThreshold * hitThreshold)
+            return i;
+    }
+    return -1;
+}
+
+void GraphCanvas::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) {
+        QWidget::mouseDoubleClickEvent(event);
+        return;
+    }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QPointF clickPosition = event->position();
+#else
+    const QPointF clickPosition = event->pos();
+#endif
+
+    // Only trigger weight editing when no vertex is near the click
+    const qreal hitRadius = vertexRadius + vertexClickTolerance;
+    for (const QPointF &v : std::as_const(vertices)) {
+        const QPointF d = v - clickPosition;
+        if (QPointF::dotProduct(d, d) <= hitRadius * hitRadius)
+            return;
+    }
+
+    const qsizetype idx = edgeAt(clickPosition);
+    if (idx < 0)
+        return;
+
+    const double current = edgeWeights.at(idx);
+    bool ok = false;
+    const double newWeight = QInputDialog::getDouble(
+        this, tr("Вес ребра"),
+        tr("Введите вес ребра %1 — %2:").arg(edges.at(idx).first + 1).arg(edges.at(idx).second + 1),
+        current, -1e9, 1e9, 2, &ok);
+
+    if (ok && newWeight != current) {
+        edgeWeights[idx] = newWeight;
+        emit graphChanged();
+        update();
+    }
+}
+
 void GraphCanvas::mouseMoveEvent(QMouseEvent *event)
 {
     if (!m_isDragging)
@@ -112,6 +171,7 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
     if (event->key() == Qt::Key_Delete && m_allSelected) {
         vertices.clear();
         edges.clear();
+        edgeWeights.clear();
         selectedVertexIndex = -1;
         startVertexIndex = -1;
         m_allSelected = false;
@@ -126,11 +186,12 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
         const qsizetype removedIndex = selectedVertexIndex;
         vertices.removeAt(removedIndex);
         QVector<QPair<qsizetype, qsizetype>> newEdges;
+        QVector<double> newWeights;
         newEdges.reserve(edges.size());
 
-        for (const auto &edge : edges) {
-            qsizetype from = edge.first;
-            qsizetype to = edge.second;
+        for (qsizetype i = 0; i < edges.size(); ++i) {
+            qsizetype from = edges.at(i).first;
+            qsizetype to = edges.at(i).second;
 
             if (from == removedIndex || to == removedIndex)
                 continue;
@@ -138,8 +199,10 @@ void GraphCanvas::keyPressEvent(QKeyEvent *event)
             if (to > removedIndex) --to;
 
             newEdges.append(qMakePair(from, to));
+            newWeights.append(i < edgeWeights.size() ? edgeWeights.at(i) : 1.0);
         }
         edges = std::move(newEdges);
+        edgeWeights = std::move(newWeights);
         selectedVertexIndex = -1;
         m_highlights.clear();
         m_vertexColors.clear();
@@ -216,8 +279,10 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
                         return true;
                     return false;
                 });
-            if (!exists)
+            if (!exists) {
                 edges.append(qMakePair(from, to));
+                edgeWeights.append(1.0);
+            }
             selectedVertexIndex = -1;
             m_vertexColors.clear();
             emit graphChanged();
@@ -228,6 +293,10 @@ void GraphCanvas::mousePressEvent(QMouseEvent *event)
         update();
         return;
     }
+
+    // Don't create a vertex on clicks that land on an edge — those belong to double-click weight editing
+    if (edgeAt(clickPosition) >= 0)
+        return;
 
     vertices.append(clickPosition);
     separateVertices();
@@ -351,12 +420,16 @@ void GraphCanvas::paintEvent(QPaintEvent *event)
         QFont weightFont = painter.font();
         weightFont.setPointSize(8);
         painter.setFont(weightFont);
-        for (const QPair<qsizetype, qsizetype> &edge : std::as_const(edges)) {
+        for (qsizetype i = 0; i < edges.size(); ++i) {
+            const QPair<qsizetype, qsizetype> &edge = edges.at(i);
             const QPointF &a = vertices.at(edge.first);
             const QPointF &b = vertices.at(edge.second);
             const QPointF delta = b - a;
             const qreal dist = std::hypot(delta.x(), delta.y());
-            const QString label = QString::number(static_cast<long long>(edgeDisplayWeight(dist)));
+            const double w = i < edgeWeights.size() ? edgeWeights.at(i) : 1.0;
+            const QString label = (w == std::floor(w))
+                ? QString::number(static_cast<long long>(w))
+                : QString::number(w, 'f', 2);
             const QFontMetrics fm(weightFont);
             const QRectF labelRect = fm.boundingRect(label).adjusted(-3, -2, 3, 2);
             // Skip label if edge is too short to place it clear of both vertices
@@ -412,10 +485,13 @@ void GraphCanvas::clearVertexColors()
 }
 
 void GraphCanvas::setData(const QVector<QPointF> &newVertices,
-                          const QVector<QPair<qsizetype, qsizetype>> &newEdges)
+                          const QVector<QPair<qsizetype, qsizetype>> &newEdges,
+                          const QVector<double> &newWeights)
 {
     vertices = newVertices;
     edges = newEdges;
+    edgeWeights = newWeights;
+    edgeWeights.resize(edges.size(), 1.0);
     selectedVertexIndex = -1;
     startVertexIndex = -1;
     m_allSelected = false;
@@ -430,6 +506,7 @@ void GraphCanvas::clear()
 {
     vertices.clear();
     edges.clear();
+    edgeWeights.clear();
     selectedVertexIndex = -1;
     startVertexIndex = -1;
     m_allSelected = false;
@@ -444,26 +521,24 @@ void GraphCanvas::deleteVertex(qsizetype index)
     if (index < 0 || index >= vertices.size())
         return;
 
-    // Удаляем вершину
     vertices.remove(index);
 
-    // Обновляем индексы в рёбрах
     QVector<QPair<qsizetype, qsizetype>> newEdges;
-    for (const auto &edge : edges) {
-        qsizetype from = edge.first;
-        qsizetype to = edge.second;
+    QVector<double> newWeights;
+    for (qsizetype i = 0; i < edges.size(); ++i) {
+        qsizetype from = edges.at(i).first;
+        qsizetype to = edges.at(i).second;
 
-        // Если ребро не связано с удаляемой вершиной
         if (from != index && to != index) {
-            // Корректируем индексы (сдвигаем влево те, что больше удалённой)
             if (from > index) from--;
             if (to > index) to--;
             newEdges.append(qMakePair(from, to));
+            newWeights.append(i < edgeWeights.size() ? edgeWeights.at(i) : 1.0);
         }
-        // Ребро, связанное с удаляемой вершиной, просто пропускаем (удаляется)
     }
 
     edges = newEdges;
+    edgeWeights = newWeights;
 
     // Снимаем выделение
     selectedVertexIndex = -1;

@@ -17,13 +17,15 @@ public:
     // Геттеры для получения данных
     QVector<QPointF> getVertices() const { return vertices; }
     QVector<QPair<qsizetype, qsizetype>> getEdges() const { return edges; }
+    QVector<double> getEdgeWeights() const { return edgeWeights; }
     qsizetype getStartVertex() const { return startVertexIndex; }
     bool isDirected() const { return m_isDirected; }
     bool showEdgeWeights() const { return m_showEdgeWeights; }
 
     // Сеттеры для установки данных
     void setData(const QVector<QPointF> &newVertices,
-                 const QVector<QPair<qsizetype, qsizetype>> &newEdges);
+                 const QVector<QPair<qsizetype, qsizetype>> &newEdges,
+                 const QVector<double> &newWeights = {});
     void clear();
 
     // Методы подсветки
@@ -47,26 +49,29 @@ signals:
 
     // Обработчики событий
 protected:
-    void mousePressEvent(QMouseEvent *event) override; // Клик мышью
-    void paintEvent(QPaintEvent *event) override;      // Вызывается когда нужно перерисовать виджет
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void paintEvent(QPaintEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;     // Нажатие клавиш
+    void keyPressEvent(QKeyEvent *event) override;
 
 private:
-    QVector<QPointF> vertices;                   // Координаты всех вершин
-    QVector<QPair<qsizetype, qsizetype>> edges;  // Связи (пара индексов)
-    qsizetype selectedVertexIndex = -1;          // Выбранная вершина ( -1 ничего )
-    qsizetype startVertexIndex = -1;             // Стартовая вершина
+    QVector<QPointF> vertices;
+    QVector<QPair<qsizetype, qsizetype>> edges;
+    QVector<double> edgeWeights;
+    qsizetype selectedVertexIndex = -1;
+    qsizetype startVertexIndex = -1;
     QVector<QColor> m_vertexColors;
     bool m_isDragging = false;
     qsizetype m_draggedVertexIndex = -1;
     bool m_isDirected = false;
-    bool m_showEdgeWeights = false;
+    bool m_showEdgeWeights = true;
     bool m_allSelected = false;
     QPointF m_lastDragPos;
 
     void separateVertices(qsizetype pinned = -1);
+    qsizetype edgeAt(const QPointF &pos) const;
 
     struct Highlight {
         bool isEdge = false;

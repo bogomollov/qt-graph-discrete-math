@@ -5,14 +5,8 @@
 #include <QPair>
 #include <QPointF>
 #include <algorithm>
-#include <cmath>
 
 constexpr double kMinVertexDistance = 62.0;
-
-inline double edgeDisplayWeight(double euclideanDist)
-{
-    return std::max(1.0, std::round(euclideanDist) - kMinVertexDistance + 1.0);
-}
 
 class GraphData
 {
@@ -20,12 +14,14 @@ public:
     GraphData() = default;
 
     void setData(const QVector<QPointF> &vertices,
-                 const QVector<QPair<qsizetype, qsizetype>> &edges);
+                 const QVector<QPair<qsizetype, qsizetype>> &edges,
+                 const QVector<double> &weights = {});
 
     int vertexCount() const;
     QVector<qsizetype> getNeighbors(qsizetype vertexIndex) const;
     const QVector<QPointF> &vertices() const;
     const QVector<QPair<qsizetype, qsizetype>> &edges() const;
+    const QVector<double> &edgeWeights() const;
 
     bool isDirected() const { return m_isDirected; }
     void setDirected(bool directed) { m_isDirected = directed; }
@@ -34,6 +30,7 @@ public:
 private:
     QVector<QPointF> m_vertices;
     QVector<QPair<qsizetype, qsizetype>> m_edges;
+    QVector<double> m_edgeWeights;
     bool m_isDirected = false;
 };
 

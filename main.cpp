@@ -6,6 +6,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.setApplicationName("qt-graph-discrete-math");
 
     // Загрузка стиля Windows XP
     QFile styleFile(":/style.qss");

@@ -15,6 +15,7 @@ public:
     static bool saveToFile(const QString &fileName,
                            const QVector<QPointF> &vertices,
                            const QVector<QPair<qsizetype, qsizetype>> &edges,
+                           const QVector<double> &weights = {},
                            bool directed = false,
                            QString *errorMessage = nullptr);
 
@@ -22,6 +23,7 @@ public:
     static bool loadFromFile(const QString &fileName,
                              QVector<QPointF> &vertices,
                              QVector<QPair<qsizetype, qsizetype>> &edges,
+                             QVector<double> *weights = nullptr,
                              bool *directed = nullptr,
                              QString *errorMessage = nullptr);
 };

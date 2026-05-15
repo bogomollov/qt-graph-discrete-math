@@ -1,7 +1,6 @@
 #include "graphalgorithms.h"
 #include "graphdata.h"
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <QQueue>
 #include <QSet>
@@ -180,26 +179,26 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::spanningTree(const GraphDa
         return treeEdges;
     }
 
+    const QVector<double> &weights = graph.edgeWeights();
     QVector<WeightedEdge> weightedEdges;
     weightedEdges.reserve(graph.edges().size());
 
-    for (const auto &edge : graph.edges()) {
+    for (qsizetype i = 0; i < graph.edges().size(); ++i) {
+        const auto &edge = graph.edges().at(i);
         if (edge.first == edge.second
             || edge.first < 0 || edge.second < 0
             || edge.first >= vertexCount || edge.second >= vertexCount) {
             continue;
         }
-
-        const QPointF delta = graph.vertices().at(edge.first) - graph.vertices().at(edge.second);
-        weightedEdges.append({edge.first, edge.second, edgeDisplayWeight(std::hypot(delta.x(), delta.y()))});
+        const double w = i < weights.size() ? weights.at(i) : 1.0;
+        weightedEdges.append({edge.first, edge.second, w});
     }
 
     std::sort(weightedEdges.begin(), weightedEdges.end(),
               [minimum](const WeightedEdge &left, const WeightedEdge &right) {
                   if (left.weight == right.weight) {
-                      if (left.from == right.from) {
+                      if (left.from == right.from)
                           return left.to < right.to;
-                      }
                       return left.from < right.from;
                   }
                   return minimum ? left.weight < right.weight : left.weight > right.weight;
@@ -363,12 +362,13 @@ QVector<QPair<qsizetype, qsizetype>> GraphAlgorithms::dijkstra(const GraphData &
     dist[startVertex] = 0.0;
 
     // Build adjacency list once to avoid O(|E|) edge scan per iteration
+    const QVector<double> &weights = graph.edgeWeights();
     QVector<QVector<QPair<int, double>>> adj(n);
-    for (const auto &edge : graph.edges()) {
+    for (qsizetype i = 0; i < graph.edges().size(); ++i) {
+        const auto &edge = graph.edges().at(i);
         const int a = static_cast<int>(edge.first);
         const int b = static_cast<int>(edge.second);
-        const QPointF delta = graph.vertices().at(a) - graph.vertices().at(b);
-        const double w = edgeDisplayWeight(std::hypot(delta.x(), delta.y()));
+        const double w = i < weights.size() ? weights.at(i) : 1.0;
         adj[a].append(qMakePair(b, w));
         if (!graph.isDirected())
             adj[b].append(qMakePair(a, w));

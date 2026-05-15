@@ -1,10 +1,13 @@
 #include "graphdata.h"
 
 void GraphData::setData(const QVector<QPointF> &vertices,
-                        const QVector<QPair<qsizetype, qsizetype>> &edges)
+                        const QVector<QPair<qsizetype, qsizetype>> &edges,
+                        const QVector<double> &weights)
 {
     m_vertices = vertices;
     m_edges = edges;
+    m_edgeWeights = weights;
+    m_edgeWeights.resize(m_edges.size(), 1.0);
 }
 
 int GraphData::vertexCount() const
@@ -20,6 +23,11 @@ const QVector<QPointF> &GraphData::vertices() const
 const QVector<QPair<qsizetype, qsizetype>> &GraphData::edges() const
 {
     return m_edges;
+}
+
+const QVector<double> &GraphData::edgeWeights() const
+{
+    return m_edgeWeights;
 }
 
 QVector<qsizetype> GraphData::getNeighbors(qsizetype vertexIndex) const
