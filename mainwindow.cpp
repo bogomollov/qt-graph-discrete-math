@@ -253,7 +253,7 @@ void MainWindow::buildSpanningTree(bool minimum)
     }
 
     const QVector<QPointF> vertices = graphCanvas->getVertices();
-    graphData->setData(vertices, graphCanvas->getEdges());
+    graphData->setData(vertices, graphCanvas->getEdges(), graphCanvas->getEdgeWeights());
 
     if (graphData->vertexCount() == 0) {
         ui->logOutput->appendPlainText("Ошибка: граф пуст!");
@@ -269,8 +269,25 @@ void MainWindow::buildSpanningTree(bool minimum)
         return;
     }
 
-    spanningTreeCanvas->setData(vertices, treeEdges);
-    spanningTreeCanvas->setShowEdgeWeights(true);
+    // Look up the weight for each tree edge from the original graph
+    const QVector<QPair<qsizetype, qsizetype>> &srcEdges = graphData->edges();
+    const QVector<double> &srcWeights = graphData->edgeWeights();
+    QVector<double> treeWeights;
+    treeWeights.reserve(treeEdges.size());
+    for (const auto &te : treeEdges) {
+        double w = 1.0;
+        for (qsizetype i = 0; i < srcEdges.size(); ++i) {
+            const auto &se = srcEdges.at(i);
+            if ((se.first == te.first && se.second == te.second)
+                || (!graphData->isDirected() && se.first == te.second && se.second == te.first)) {
+                w = i < srcWeights.size() ? srcWeights.at(i) : 1.0;
+                break;
+            }
+        }
+        treeWeights.append(w);
+    }
+
+    spanningTreeCanvas->setData(vertices, treeEdges, treeWeights);
 
     if (!spanningTreeWindow->isVisible()) {
         const QRect mainGeometry = frameGeometry();
